@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-// import 'forum-frontend/src/css/Postst.css';
-
-
+ import '../MainLayout.css';
 
 const CreatePost = ({ onPostCreated }) => {
     const [newPost, setNewPost] = useState({ title: '', content: '' });
@@ -29,23 +27,23 @@ const CreatePost = ({ onPostCreated }) => {
     };
 
     return (
-        <CreatePostContainer>
+        <div className="create-post-container">
             <h3>Create New Post</h3>
-            <Input
+            <input
                 type="text"
                 name="title"
                 placeholder="Title"
-                value={newPost.title} // Исправлено: Добавлено значение
+                value={newPost.title}
                 onChange={handleInputChange}
             />
-            <TextArea
+            <textarea
                 name="content"
                 placeholder="Content"
                 value={newPost.content}
                 onChange={handleInputChange}
             />
-            <Button onClick={createPost}>Create Post</Button>
-        </CreatePostContainer>
+            <button onClick={createPost}>Create Post</button>
+        </div>
     );
 };
 

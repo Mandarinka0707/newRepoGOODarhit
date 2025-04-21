@@ -9,6 +9,7 @@ import (
 	"backend.com/forum/forum-servise/internal/domain"
 	"backend.com/forum/forum-servise/internal/repository"
 	"backend.com/forum/forum-servise/pkg/logger"
+
 	pb "backend.com/forum/proto"
 	"github.com/gorilla/websocket"
 )
@@ -92,21 +93,21 @@ func (s *ForumService) broadcastChatMessage(message *domain.ChatMessage) {
 }
 
 // Функция для удаления устаревших сообщений (cron job)
-func (s *ForumService) cleanupChatMessages() {
-	ctx := context.Background()
-	cutoffTime := time.Now().Add(-s.chatMessageTTL) // Вычисление времени удаления
-	deletedCount, err := s.chatMessageRepo.DeleteChatMessagesBefore(ctx, cutoffTime)
+// func (s *ForumService) cleanupChatMessages() {
+// 	ctx := context.Background()
+// 	cutoffTime := time.Now().Add(-s.chatMessageTTL) // Вычисление времени удаления
+// 	deletedCount, err := s.chatMessageRepo.DeleteChatMessagesBefore(ctx, cutoffTime)
 
-	if err != nil {
-		s.logger.Errorw("Failed to delete old chat messages", "error", err)
-		return
-	}
+// 	if err != nil {
+// 		s.logger.Errorw("Failed to delete old chat messages", "error", err)
+// 		return
+// 	}
 
-	s.logger.Infow("Deleted old chat messages", "count", deletedCount)
-}
+// 	s.logger.Infow("Deleted old chat messages", "count", deletedCount)
+// }
 
 // Функция для обработки подключений к веб-сокет чату
-func (s *ForumService) websocketHandler(w http.ResponseWriter, r *http.Request) {
+func (s *ForumService) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.logger.Errorw("Failed to upgrade to websocket", "error", err)

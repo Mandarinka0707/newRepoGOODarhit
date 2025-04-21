@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package forum;
+
+option go_package = "backend.com/forum/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// Сервис для работы с форумом
+service ForumService {
+    // Категории
+    rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+    rpc GetCategory (GetCategoryRequest) returns (GetCategoryResponse);
+    
+    // Темы
+    rpc CreateTopic (CreateTopicRequest) returns (CreateTopicResponse);
+    rpc GetTopic (GetTopicRequest) returns (GetTopicResponse);
+    
+    // Сообщения
+    rpc CreateMessage (CreateMessageRequest) returns (CreateMessageResponse);
+    rpc GetMessage (GetMessageRequest) returns (GetMessageResponse);
+    
+    // Чат
+    rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
+    rpc StreamChatMessages (StreamChatMessagesRequest) returns (stream ChatMessage);
+}
+
+// Модели данных
+message Category {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+message Topic {
+    int64 id = 1;
+    int64 category_id = 2;
+    string title = 3;
+    int64 user_id = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message Message {
+    int64 id = 1;
+    int64 topic_id = 2;
+    int64 user_id = 3;
+    string content = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message ChatMessage {
+    int64 id = 1;
+    int64 user_id = 2;
+    string content = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+// Запросы и ответы для категорий
+message CreateCategoryRequest {
+    string name = 1;
+    string description = 2;
+}
+
+message CreateCategoryResponse {
+    int64 id = 1;
+}
+
+message GetCategoryRequest {
+    int64 id = 1;
+}
+
+message GetCategoryResponse {
+    Category category = 1;
+}
+
+// Запросы и ответы для тем
+message CreateTopicRequest {
+    int64 category_id = 1;
+    string title = 2;
+    int64 user_id = 3;
+}
+
+message CreateTopicResponse {
+    int64 id = 1;
+}
+
+message GetTopicRequest {
+    int64 id = 1;
+}
+
+message GetTopicResponse {
+    Topic topic = 1;
+}
+
+// Запросы и ответы для сообщений
+message CreateMessageRequest {
+    int64 topic_id = 1;
+    int64 user_id = 2;
+    string content = 3;
+}
+
+message CreateMessageResponse {
+    int64 id = 1;
+}
+
+message GetMessageRequest {
+    int64 id = 1;
+}
+
+message GetMessageResponse {
+    Message message = 1;
+}
+
+// Запросы и ответы для чата
+message CreateChatMessageRequest {
+    int64 user_id = 1;
+    string content = 2;
+}
+
+message CreateChatMessageResponse {
+    int64 id = 1;
+}
+
+message StreamChatMessagesRequest {
+    // Пустой запрос для начала стриминга
+}

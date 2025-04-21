@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-// import './auth.css'; // Импортируйте CSS здесь
+ import '../MainLayout.css'; // Импортируйте CSS здесь
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -10,18 +10,15 @@ const Register = () => {
 
     const handleRegister = async () => {
         try {
-            const response = await axios.post('http://localhost:8080/register', {
-                username: username,
-                password: password,
-            });
-            //console.log(response.data);
-             // localStorage.setItem('token', response.data.token); // Раскомментировать если backend возвращает токен при регистрации
-            navigate('/Login');
+          await axios.post('http://localhost:8080/register', {
+            username,
+            password,
+          });
+          navigate('/login');
         } catch (error) {
-            console.error('Registration failed:', error);
-            alert('Registration failed. Please try again.');
+          console.error('Registration failed:', error);
         }
-    };
+      };
 
     return (
         <div className="auth-container">

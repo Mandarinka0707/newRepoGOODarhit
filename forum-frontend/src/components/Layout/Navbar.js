@@ -1,5 +1,5 @@
 import React from 'react';
-// import './Navbar.css'; // Импортируйте CSS здесь
+ import '../MainLayout.css'; // Импортируйте CSS здесь
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {

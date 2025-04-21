@@ -1,10 +1,18 @@
 import React from 'react';
-import 'forum-frontend/src/components/Layout/Navbar.js';
+import Navbar from './Navbar';
+import Chat from '../Chat/Chat';
+import '../MainLayout.css'; // Импортируйте CSS здесь
+
 const MainLayout = ({ children }) => {
+    const isLoggedIn = localStorage.getItem('token') !== null;
+
     return (
         <>
             <Navbar />
-            <Content>{children}</Content>
+            <div className="main-layout">
+                {isLoggedIn && <Chat />}
+                <div className="content">{children}</div>
+            </div>
         </>
     );
 };

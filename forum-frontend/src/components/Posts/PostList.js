@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-// import 'forum-frontend/src/css/Postst.css';
-
+ import '../MainLayout.css';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
@@ -20,19 +19,19 @@ const PostList = () => {
     }, []);
 
     return (
-        <PostListContainer>
+        <div className="post-list-container">
             {posts && posts.length > 0 ? (
                 [...posts].reverse().map(post => (
-                    <PostItem key={post.id}>
+                    <div key={post.id} className="post-item">
                         <h3>{post.title}</h3>
                         <p>{post.content}</p>
                         <small>Created by User ID: {post.author_id}</small>
-                    </PostItem>
+                    </div>
                 ))
             ) : (
                 <p>No posts available.</p>
             )}
-        </PostListContainer>
+        </div>
     );
 };
 

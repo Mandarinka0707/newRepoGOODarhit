@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "forum.servise.com/forum-servise/pkg/grpc";
+option go_package = "backend.com/forum/proto";
 
 package pb;
 

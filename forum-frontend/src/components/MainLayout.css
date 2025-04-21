@@ -1,0 +1,164 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #e0f7fa; /* Soft blue background */
+  color: #0277bd; /* Dark blue text */
+  display: flex;
+  flex-direction: column; /* Ensure vertical stacking */
+  min-height: 100vh; /* Make body take up full viewport height */
+  margin: 0; /* Remove default body margins */
+}
+
+.main-layout {
+  display: flex;
+  flex-grow: 1; /* Allow content to expand to fill available space */
+}
+
+.chat {
+  width: 300px;
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #b3e5fc; /* Lighter blue background for chat */
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.content {
+  flex-grow: 1; /* Allow content to expand */
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+  align-items: center; /* Center content horizontally */
+  padding: 20px; /* Add padding around content */
+  width: 100%; /* Ensure content takes full width */
+  box-sizing: border-box; /* Include padding in element width */
+}
+
+
+.navbar {
+  background-color: #0288d1; /* Dark blue navbar */
+  color: white;
+  padding: 10px;
+  width: 100%; /* Make navbar full width */
+  display: flex;
+  justify-content: space-between; /* Distribute space between items */
+  align-items: center;
+  box-sizing: border-box; /* Include padding in element width */
+}
+
+.navbar .navLinks {
+  margin: 0; /* Remove default margin */
+  display: flex;
+  align-items: center; /* Align items vertically */
+}
+
+.navbar .navLinks a {
+  color: white;
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.navbar .navLinks a:hover {
+  text-decoration: underline;
+}
+
+.auth-container {
+  max-width: 100%;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #b3e5fc;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+
+.auth-container h2 {
+  text-align: center;
+  color: #0277bd; /* Dark blue text */
+  margin-bottom: 20px; /* Add some space below the heading */
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #0277bd; /* Dark blue border */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.auth-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #0277bd; /* Dark blue button */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px; /* Add some space above the button */
+}
+
+.auth-container button:hover {
+  background-color: #01579b; /* Darker blue on hover */
+}
+
+
+
+/* CreatePost and PostList styles (added for completeness) */
+.create-post-container,
+.post-list-container {
+  background-color: #b3e5fc; /* Lighter blue background */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  width: 80%; /* Adjust width as needed */
+  max-width: 800px; /* Set a maximum width to prevent overflowing */
+}
+
+.create-post-container input,
+.create-post-container textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #0277bd; /* Dark blue border */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.create-post-container button {
+  padding: 10px 20px;
+  background-color: #0277bd; /* Dark blue button */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.create-post-container button:hover {
+  background-color: #01579b; /* Darker blue on hover */
+}
+
+.post-item {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  width: 80%; /* Adjust width as needed */
+  max-width: 800px; /* Set a maximum width to prevent overflowing */
+}
+
+.post-item h3 {
+  color: #0277bd; /* Dark blue text */
+}
+
+.post-item p {
+  color: #333;
+}
+
+.post-item small {
+  color: #777;
+}

@@ -1,58 +1,111 @@
-import { createGlobalStyle } from 'styled-components';
+/* Общие стили */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f8ff; /* Нежно-голубой фон */
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
 
-const GlobalStyle = createGlobalStyle`
-  body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+/* Заголовок форума */
+.header {
+  background-color: #add8e6; /* Светло-голубой */
+  padding: 20px;
+  text-align: center;
+  font-size: 2em;
+  border-bottom: 2px solid #87ceeb; /* Небесно-голубой */
+}
 
-  h1, h2, h3, h4, h5, h6 {
-    color: #0056b3;
-  }
+/* Стили для форм (регистрация и вход) */
+.form-container {
+  background-color: #e0f7fa; /* Очень светлый голубой */
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
 
-  a {
-    text-decoration: none;
-    color: #007bff;
-    transition: color 0.3s ease;
+.form-container input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #87ceeb; /* Небесно-голубой */
+  border-radius: 4px;
+}
 
-    &:hover {
-      color: #0056b3;
-    }
-  }
+.form-container button {
+  background-color: #add8e6; /* Светло-голубой */
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
 
-  button {
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.form-container button:hover {
+  background-color: #87ceeb; /* Небесно-голубой при наведении */
+}
 
-    &:hover {
-      background-color: #0056b3;
-    }
+/* Стили для постов */
+.post {
+  background-color: #e0f7fa; /* Очень светлый голубой */
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-    &:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-  }
+.post-title {
+  font-size: 1.5em;
+  color: #4682b4; /* Стальной голубой */
+}
 
-  input[type="text"],
-  input[type="password"],
-  textarea {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-`;
+.post-content {
+  margin-top: 10px;
+}
 
-export default GlobalStyle;
+/* Стили для чата */
+.chat-container {
+  background-color: #f0f8ff; /* Нежно-голубой фон */
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chat-message {
+  background-color: #add8e6; /* Светло-голубой */
+  border-radius: 4px;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+/* Стили для кнопки отправки сообщения в чате */
+.chat-input {
+  display: flex;
+  margin-top: 10px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #87ceeb; /* Небесно-голубой */
+  border-radius: 4px;
+}
+
+.chat-input button {
+  background-color: #87ceeb; /* Небесно-голубой */
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.chat-input button:hover {
+  background-color: #4682b4; /* Стальной голубой при наведении */
+}
