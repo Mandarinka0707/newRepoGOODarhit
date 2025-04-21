@@ -1,0 +1,31 @@
+/* Страница постов */
+.post-list {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.post {
+    border-bottom: 1px solid #eaeaea;
+    padding: 15px 0;
+}
+
+.post:last-child {
+    border-bottom: none;
+}
+
+.post-title {
+    font-size: 1.5em;
+    margin: 0;
+}
+
+.post-meta {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.post-content {
+    margin-top: 10px;
+}

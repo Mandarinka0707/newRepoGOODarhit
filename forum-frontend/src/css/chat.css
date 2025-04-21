@@ -1,0 +1,21 @@
+/* Чат */
+.chat-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.chat-message {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.chat-message.user {
+    background-color: #3498db;
+    color: white;
+}
+
+.chat-message.other {
+    background-color: #ecf0f1;
+}
