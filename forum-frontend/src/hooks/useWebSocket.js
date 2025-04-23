@@ -1,9 +1,9 @@
 // useWebSocket.js
 import { useState, useEffect } from 'react';
-
 const useWebSocket = (url) => {
     const [socket, setSocket] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
     useEffect(() => {
         const ws = new WebSocket(url);
@@ -11,6 +11,7 @@ const useWebSocket = (url) => {
         ws.onopen = () => {
             console.log('WebSocket connected');
             setSocket(ws);
+            setConnectionStatus('connected');
         };
 
         ws.onmessage = (event) => {
@@ -25,10 +26,16 @@ const useWebSocket = (url) => {
         ws.onclose = () => {
             console.log('WebSocket disconnected');
             setSocket(null);
+            setConnectionStatus('disconnected');
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+                setConnectionStatus('reconnecting');
+            }, 5000);
         };
 
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
+            setConnectionStatus('error');
         };
 
         return () => {
@@ -43,10 +50,16 @@ const useWebSocket = (url) => {
             socket.send(JSON.stringify(message));
         } else {
             console.error('WebSocket is not connected');
+            // Optionally queue messages when disconnected
         }
     };
 
-    return { socket, messages, sendMessage };
+    return { 
+        socket, 
+        messages, 
+        sendMessage, 
+        connectionStatus 
+    };
 };
 
 export default useWebSocket; // Добавьте эту строку

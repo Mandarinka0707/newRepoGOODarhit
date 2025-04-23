@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../MainLayout.css';
 
@@ -7,16 +7,19 @@ const PostList = ({ refreshTrigger }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchPosts = async () => {
+    const fetchPosts = useCallback(async () => {
+        let isMounted = true;
+    
         try {
             setLoading(true);
             setError(null);
-            
+
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Authentication token not found');
             }
 
+            // 1. Get posts
             const response = await axios.get('http://localhost:8081/posts', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -24,49 +27,75 @@ const PostList = ({ refreshTrigger }) => {
                 }
             });
 
-            // Validate response structure
-            if (!response.data || !Array.isArray(response.data)) {
+            if (!isMounted) return;
+
+            // 2. Check response structure
+            const postsData = response.data?.data || response.data;
+            
+            if (!postsData || !Array.isArray(postsData)) {
                 throw new Error('Invalid data structure received from server');
             }
 
-            // Process posts and ensure they have valid IDs
-            const processedPosts = response.data.map((post, index) => {
-                // Log posts without IDs for debugging
-                if (!post.id) {
-                    console.warn('Post missing ID:', post);
-                }
-                
-                return {
-                    ...post,
-                    id: post.id || `temp-${index}-${Date.now()}`,
-                    title: post.title || 'Untitled Post',
-                    content: post.content || 'No content available',
-                    author_id: post.author_id || 'Unknown',
-                    created_at: post.created_at || new Date().toISOString()
-                };
-            });
+            // 3. Process posts
+            const processedPosts = await Promise.all(
+                postsData.map(async (post) => {
+                    let username = `User ${post.author_id}`;
+                    
+                    // 4. If no author name, fetch it
+                    if (!post.author_name) {
+                        try {
+                            const userResponse = await axios.get(
+                                `http://localhost:8081/api/users/${post.author_id}`,
+                                { headers: { 'Authorization': `Bearer ${token}` } }
+                            );
+                            username = userResponse.data.username || username;
+                        } catch (err) {
+                            console.error('Failed to fetch username:', err);
+                        }
+                    } else {
+                        username = post.author_name;
+                    }
 
-            setPosts(processedPosts);
-        } catch (err) {
-            console.error('Error fetching posts:', {
-                error: err,
-                response: err.response,
-                message: err.message
-            });
-            
-            setError(
-                err.response?.data?.message || 
-                err.message || 
-                'Failed to load posts. Please try again.'
+                    return {
+                        id: post.id,
+                        title: post.title || 'Untitled Post',
+                        content: post.content || 'No content available',
+                        author_id: post.author_id,
+                        author_name: username,
+                        created_at: post.created_at || new Date().toISOString()
+                    };
+                })
             );
+
+            if (isMounted) {
+                setPosts(processedPosts);
+            }
+        } catch (err) {
+            if (isMounted) {
+                console.error('Post fetch error:', {
+                    error: err,
+                    response: err.response
+                });
+
+                setError(
+                    err.response?.data?.error || 
+                    err.response?.data?.message || 
+                    err.message || 
+                    'Failed to load posts. Please try again later.'
+                );
+            }
         } finally {
-            setLoading(false);
+            if (isMounted) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
 
     useEffect(() => {
+        const abortController = new AbortController();
         fetchPosts();
-    }, [refreshTrigger]);
+        return () => abortController.abort();
+    }, [fetchPosts, refreshTrigger]);
 
     if (loading) {
         return (
@@ -80,35 +109,41 @@ const PostList = ({ refreshTrigger }) => {
     if (error) {
         return (
             <div className="error-container">
-                <p className="error-message">Error: {error}</p>
-                <button 
+                <p className="error-message">{error}</p>
+                <button
                     onClick={fetchPosts}
                     className="retry-button"
                 >
-                    Try Again
+                    Retry
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="posts-container">
+        <div className="post-list-container">
             {posts.length > 0 ? (
-                [...posts].reverse().map(post => (
-                    <div key={post.id} className="post-card">
-                        <h3 className="post-title">{post.title}</h3>
-                        <p className="post-content">{post.content}</p>
+                [...posts].reverse().map((post) => (
+                    <div key={`post-${post.id}`} className="post-item">
+                        <h3>{post.title}</h3>
+                        <div className="post-content">
+                            {post.content.split('\n').map((paragraph, i) => (
+                                <p key={i}>{paragraph}</p>
+                            ))}
+                        </div>
                         <div className="post-meta">
-                            <span className="post-author">Author: {post.author_id}</span>
-                            <span className="post-date">
-                                {new Date(post.created_at).toLocaleString()}
+                            <span className="author">Author: {post.author_name}</span>
+                            <span className="separator"> | </span>
+                            <span className="date">
+                                {new Date(post.created_at).toLocaleDateString()}, 
+                                {new Date(post.created_at).toLocaleTimeString()}
                             </span>
                         </div>
                     </div>
                 ))
             ) : (
-                <div className="empty-state">
-                    <p>No posts available yet</p>
+                <div className="no-posts-message">
+                    <p>No posts found. Create the first one!</p>
                 </div>
             )}
         </div>

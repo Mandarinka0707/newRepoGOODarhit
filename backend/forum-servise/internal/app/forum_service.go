@@ -213,22 +213,47 @@ func (s *ForumService) CreatePost(c *gin.Context) {
 
 // GetPosts возвращает список всех постов
 func (s *ForumService) GetPosts(c *gin.Context) {
-	posts, err := s.postRepo.GetPosts(c.Request.Context())
+	// Получаем посты из репозитория
+	rawPosts, err := s.postRepo.GetPosts(c.Request.Context())
 	if err != nil {
 		s.logger.Errorw("Failed to get posts", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get posts"})
 		return
 	}
 
-	// Validate posts before returning
-	for i := range posts {
-		if posts[i].ID == 0 {
-			s.logger.Warnw("Post with missing ID found", "post", posts[i])
-			posts[i].ID = -1 // Or generate a temporary ID
+	// Создаем слайс для постов с информацией о пользователях
+	postsWithUsers := make([]gin.H, 0, len(rawPosts))
+
+	for _, post := range rawPosts {
+		if post.ID == 0 {
+			continue
 		}
+
+		// Получаем информацию о пользователе из AuthService
+		userResponse, err := s.authClient.GetUser(c.Request.Context(), &pb.GetUserRequest{
+			Id: post.AuthorID,
+		})
+
+		username := "Неизвестный" // Значение по умолчанию
+		if err == nil && userResponse.User != nil {
+			username = userResponse.User.Username
+		}
+
+		postsWithUsers = append(postsWithUsers, gin.H{
+			"id":          post.ID,
+			"title":       post.Title,
+			"content":     post.Content,
+			"author_id":   post.AuthorID,
+			"author_name": username,
+			"created_at":  post.CreatedAt.Format(time.RFC3339),
+		})
 	}
 
-	c.JSON(http.StatusOK, posts)
+	c.JSON(http.StatusOK, gin.H{
+		"data":      postsWithUsers,
+		"count":     len(postsWithUsers),
+		"timestamp": time.Now().Unix(),
+	})
 }
 
 // func NewForumService(

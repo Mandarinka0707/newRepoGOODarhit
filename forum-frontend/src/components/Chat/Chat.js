@@ -5,7 +5,11 @@ import '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/components/Ma
 const Chat = () => {
     const [message, setMessage] = useState('');
     const userId = localStorage.getItem('userId');
-    const { messages, sendMessage } = useWebSocket('ws://localhost:8081/websocket');
+    const { 
+        messages, 
+        sendMessage, 
+        connectionStatus 
+    } = useWebSocket('ws://localhost:8081/websocket');
 
     if (!userId) {
         return <div>Please login to use chat</div>;
@@ -25,6 +29,9 @@ const Chat = () => {
 
     return (
         <div className="chat-container">
+            <div className="connection-status">
+                Status: {connectionStatus}
+            </div>
             <div className="messages">
                 {messages.map((msg, index) => (
                     <div key={index} className="message">
@@ -39,8 +46,14 @@ const Chat = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
+                    disabled={connectionStatus !== 'connected'}
                 />
-                <button type="submit">Send</button>
+                <button 
+                    type="submit"
+                    disabled={connectionStatus !== 'connected'}
+                >
+                    Send
+                </button>
             </form>
         </div>
     );
