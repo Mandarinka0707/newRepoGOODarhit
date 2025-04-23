@@ -1,46 +1,77 @@
 import React, { useState } from 'react';
 import axios from 'axios';
- import '../MainLayout.css';
+import '../MainLayout.css';
 
 const CreatePost = ({ onPostCreated }) => {
-    const [newPost, setNewPost] = useState({ title: '', content: '' });
-    const token = localStorage.getItem('token');
+    const [newPost, setNewPost] = useState({ 
+        title: '', 
+        content: '' 
+    });
+    const [error, setError] = useState('');
 
     const handleInputChange = (e) => {
-        setNewPost({ ...newPost, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setNewPost(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     const createPost = async () => {
         try {
-            const config = {
+            setError('');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                setError('You need to login first');
+                return;
+            }
+
+            if (!newPost.title.trim() || !newPost.content.trim()) {
+                setError('Title and content are required');
+                return;
+            }
+
+            const response = await axios.post('http://localhost:8081/posts', {
+                title: newPost.title,
+                content: newPost.content
+            }, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            };
-            await axios.post('http://localhost:8081/posts', newPost, config);
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
             setNewPost({ title: '', content: '' });
-            onPostCreated(); // Refresh the list
+            onPostCreated();
+            alert('Post created successfully!');
         } catch (error) {
-            console.error('Error creating post:', error);
-            alert('Error creating post. Please try again.');
+            console.error('Full error:', error);
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.message || 
+                               'Error creating post. Please try again.';
+            setError(errorMessage);
         }
     };
 
     return (
         <div className="create-post-container">
             <h3>Create New Post</h3>
+            {error && <div className="error-message">{error}</div>}
             <input
                 type="text"
                 name="title"
                 placeholder="Title"
                 value={newPost.title}
                 onChange={handleInputChange}
+                required
             />
             <textarea
                 name="content"
                 placeholder="Content"
                 value={newPost.content}
                 onChange={handleInputChange}
+                required
             />
             <button onClick={createPost}>Create Post</button>
         </div>

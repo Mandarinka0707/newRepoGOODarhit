@@ -12,6 +12,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *domain.User) (int64, error)
 	GetUserByUsername(ctx context.Context, username string) (*domain.User, error)
+	GetUserByID(ctx context.Context, id int64) (*domain.User, error) // Добавьте этот метод
 }
 
 type userRepository struct {
@@ -39,6 +40,18 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows // Важно возвращать sql.ErrNoRows
+		}
+		return nil, err
+	}
+	return user, nil
+}
+func (r *userRepository) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
+	query := `SELECT id, username, password, role, created_at FROM users WHERE id = $1`
+	user := &domain.User{}
+	err := r.db.GetContext(ctx, user, query, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // Или return nil, sql.ErrNoRows в зависимости от вашей логики
 		}
 		return nil, err
 	}

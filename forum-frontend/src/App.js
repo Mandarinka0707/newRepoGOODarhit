@@ -1,31 +1,50 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-import Chat from './components/Chat/Chat';
-import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/Layout/MainLayout.js'
-import './components/MainLayout.css'; 
-function App() {
+import PostList from './components/Posts/PostList';
+import CreatePost from './components/Posts/CreatePost';
+import MainLayout from './components/Layout/MainLayout';
+import '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/components/MainLayout.css';
+import Chat from './components/Chat/Chat'; // Добавьте импорт
+
+
+const PrivateRoute = ({ children }) => {
+    const token = localStorage.getItem('token');
+    return token ? children : <Navigate to="/login" />;
+};
+
+const App = () => {
+    const [refreshPosts, setRefreshPosts] = useState(false);
+
+    const onPostCreated = () => {
+        setRefreshPosts(prev => !prev);
+    };
+
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route 
-              path="chat" 
-              element={
-                <ProtectedRoute>
-                  <Chat />
-                </ProtectedRoute>
-              } 
-            />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        <Router>
+            <MainLayout>
+                <Routes>
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/posts" element={
+                        <PrivateRoute>
+                            <>
+                                <CreatePost onPostCreated={onPostCreated} />
+                                <PostList key={refreshPosts} />
+                            </>
+                        </PrivateRoute>
+                    } />
+                    <Route path="/chat" element={
+                        <PrivateRoute>
+                            <Chat />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/" element={<Navigate to="/login" />} />
+                </Routes>
+            </MainLayout>
+        </Router>
     );
-  }
-  
+};
 
 export default App;

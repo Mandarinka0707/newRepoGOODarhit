@@ -1,4 +1,6 @@
+// useWebSocket.js
 import { useState, useEffect } from 'react';
+
 const useWebSocket = (url) => {
     const [socket, setSocket] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -12,8 +14,12 @@ const useWebSocket = (url) => {
         };
 
         ws.onmessage = (event) => {
-            const newMessage = JSON.parse(event.data);
-            setMessages(prev => [...prev, newMessage]);
+            try {
+                const newMessage = JSON.parse(event.data);
+                setMessages(prev => [...prev, newMessage]);
+            } catch (err) {
+                console.error('Error parsing WebSocket message:', err);
+            }
         };
 
         ws.onclose = () => {
@@ -26,7 +32,7 @@ const useWebSocket = (url) => {
         };
 
         return () => {
-            if (ws.readyState === WebSocket.OPEN) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close();
             }
         };
@@ -35,10 +41,12 @@ const useWebSocket = (url) => {
     const sendMessage = (message) => {
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(message));
+        } else {
+            console.error('WebSocket is not connected');
         }
     };
 
     return { socket, messages, sendMessage };
 };
 
-export default useWebSocket;
+export default useWebSocket; // Добавьте эту строку

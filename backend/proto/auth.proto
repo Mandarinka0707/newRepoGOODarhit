@@ -4,10 +4,13 @@ option go_package = "backend.com/forum/proto";
 
 package pb;
 
+import "google/protobuf/timestamp.proto";
+
 service AuthService {
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc Login (LoginRequest) returns (LoginResponse);
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
 }
 
 message RegisterRequest {
@@ -36,4 +39,19 @@ message ValidateTokenResponse {
   bool valid = 1;
   int64 user_id = 2;
   string role = 3;
+}
+
+message GetUserRequest {
+  int64 id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message User {
+  int64 id = 1;
+  string username = 2;
+  string role = 3;
+  google.protobuf.Timestamp created_at = 4;
 }

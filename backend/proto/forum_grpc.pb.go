@@ -25,6 +25,8 @@ const (
 	ForumService_GetTopic_FullMethodName           = "/forum.ForumService/GetTopic"
 	ForumService_CreateMessage_FullMethodName      = "/forum.ForumService/CreateMessage"
 	ForumService_GetMessage_FullMethodName         = "/forum.ForumService/GetMessage"
+	ForumService_CreatePost_FullMethodName         = "/forum.ForumService/CreatePost"
+	ForumService_GetPosts_FullMethodName           = "/forum.ForumService/GetPosts"
 	ForumService_CreateChatMessage_FullMethodName  = "/forum.ForumService/CreateChatMessage"
 	ForumService_StreamChatMessages_FullMethodName = "/forum.ForumService/StreamChatMessages"
 )
@@ -44,6 +46,9 @@ type ForumServiceClient interface {
 	// Сообщения
 	CreateMessage(ctx context.Context, in *CreateMessageRequest, opts ...grpc.CallOption) (*CreateMessageResponse, error)
 	GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error)
+	// Посты
+	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error)
+	GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*GetPostsResponse, error)
 	// Чат
 	CreateChatMessage(ctx context.Context, in *CreateChatMessageRequest, opts ...grpc.CallOption) (*CreateChatMessageResponse, error)
 	StreamChatMessages(ctx context.Context, in *StreamChatMessagesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatMessage], error)
@@ -117,6 +122,26 @@ func (c *forumServiceClient) GetMessage(ctx context.Context, in *GetMessageReque
 	return out, nil
 }
 
+func (c *forumServiceClient) CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePostResponse)
+	err := c.cc.Invoke(ctx, ForumService_CreatePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *forumServiceClient) GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*GetPostsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPostsResponse)
+	err := c.cc.Invoke(ctx, ForumService_GetPosts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *forumServiceClient) CreateChatMessage(ctx context.Context, in *CreateChatMessageRequest, opts ...grpc.CallOption) (*CreateChatMessageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateChatMessageResponse)
@@ -161,6 +186,9 @@ type ForumServiceServer interface {
 	// Сообщения
 	CreateMessage(context.Context, *CreateMessageRequest) (*CreateMessageResponse, error)
 	GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error)
+	// Посты
+	CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error)
+	GetPosts(context.Context, *GetPostsRequest) (*GetPostsResponse, error)
 	// Чат
 	CreateChatMessage(context.Context, *CreateChatMessageRequest) (*CreateChatMessageResponse, error)
 	StreamChatMessages(*StreamChatMessagesRequest, grpc.ServerStreamingServer[ChatMessage]) error
@@ -191,6 +219,12 @@ func (UnimplementedForumServiceServer) CreateMessage(context.Context, *CreateMes
 }
 func (UnimplementedForumServiceServer) GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
+}
+func (UnimplementedForumServiceServer) CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
+}
+func (UnimplementedForumServiceServer) GetPosts(context.Context, *GetPostsRequest) (*GetPostsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
 }
 func (UnimplementedForumServiceServer) CreateChatMessage(context.Context, *CreateChatMessageRequest) (*CreateChatMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateChatMessage not implemented")
@@ -327,6 +361,42 @@ func _ForumService_GetMessage_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ForumService_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ForumServiceServer).CreatePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ForumService_CreatePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ForumServiceServer).CreatePost(ctx, req.(*CreatePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ForumService_GetPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPostsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ForumServiceServer).GetPosts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ForumService_GetPosts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ForumServiceServer).GetPosts(ctx, req.(*GetPostsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ForumService_CreateChatMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateChatMessageRequest)
 	if err := dec(in); err != nil {
@@ -386,6 +456,14 @@ var ForumService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMessage",
 			Handler:    _ForumService_GetMessage_Handler,
+		},
+		{
+			MethodName: "CreatePost",
+			Handler:    _ForumService_CreatePost_Handler,
+		},
+		{
+			MethodName: "GetPosts",
+			Handler:    _ForumService_GetPosts_Handler,
 		},
 		{
 			MethodName: "CreateChatMessage",

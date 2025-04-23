@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
- import '../MainLayout.css'; // Импортируйте CSS здесь
+import '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/components/MainLayout.css';
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -10,27 +10,29 @@ const Register = () => {
 
     const handleRegister = async () => {
         try {
-          await axios.post('http://localhost:8080/register', {
-            username,
-            password,
-          });
-          navigate('/login');
+            const response = await axios.post('http://localhost:8080/register', {
+                username: username,
+                password: password,
+            });
+            localStorage.setItem('token', response.data.token);
+            navigate('/login');
         } catch (error) {
-          console.error('Registration failed:', error);
+            console.error('Registration failed:', error);
+            alert('Registration failed. Please try again.');
         }
-      };
+    };
 
     return (
         <div className="auth-container">
             <h2>Register</h2>
-            <input // Заменил Input на input и добавил className
+            <input
                 type="text"
                 className="form-control"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
             />
-            <input // Заменил Input на input и добавил className
+            <input
                 type="password"
                 className="form-control"
                 placeholder="Password"

@@ -13,6 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AuthService struct {
@@ -119,4 +120,30 @@ func (s *AuthService) ValidateToken(ctx context.Context, req *pb.ValidateTokenRe
 	}
 	s.logger.Infow("Token is valid", "user_id", userID)
 	return &pb.ValidateTokenResponse{Valid: true, UserId: int64(userID), Role: role}, nil
+}
+func (s *AuthService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	s.logger.Infow("GetUser request received", "user_id", req.Id)
+
+	// Get user from repository
+	user, err := s.userRepo.GetUserByID(ctx, req.Id)
+	if err != nil {
+		s.logger.Errorw("Failed to get user by ID", "user_id", req.Id, "error", err)
+		return nil, status.Errorf(codes.NotFound, "user not found")
+	}
+
+	if user == nil {
+		s.logger.Warnw("User not found", "user_id", req.Id)
+		return nil, status.Errorf(codes.NotFound, "user not found")
+	}
+
+	// Convert domain user to protobuf user
+	pbUser := &pb.User{
+		Id:        user.ID,
+		Username:  user.Username,
+		Role:      string(user.Role),
+		CreatedAt: timestamppb.New(user.CreatedAt),
+	}
+
+	s.logger.Infow("User retrieved successfully", "user_id", req.Id)
+	return &pb.GetUserResponse{User: pbUser}, nil
 }

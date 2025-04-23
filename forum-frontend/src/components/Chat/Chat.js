@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import useWebSocket from '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/hooks/useWebSocket.js';
-import '../MainLayout.css';
+import '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/components/MainLayout.css';
+
 const Chat = () => {
     const [message, setMessage] = useState('');
-    const { messages, sendMessage } = useWebSocket('ws://localhost:3000/websocket');
+    const userId = localStorage.getItem('userId');
+    const { messages, sendMessage } = useWebSocket('ws://localhost:8081/websocket');
+
+    if (!userId) {
+        return <div>Please login to use chat</div>;
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (message.trim()) {
             sendMessage({
                 content: message,
-                userId: localStorage.getItem('userId'), // или из контекста/стора
+                userId: userId,
                 timestamp: new Date().toISOString()
             });
             setMessage('');
@@ -39,5 +45,4 @@ const Chat = () => {
         </div>
     );
 };
-
 export default Chat;
