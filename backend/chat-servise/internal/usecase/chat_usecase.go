@@ -1,92 +1,64 @@
+// internal/usecase/chat_usecase.go
 package usecase
 
 import (
 	"context"
-	"net/http"
-	"time"
 
 	"backend.com/forum/chat-servise/internal/entity"
 	"backend.com/forum/chat-servise/internal/repository"
-	"backend.com/forum/chat-servise/pkg/logger"
-	"github.com/gorilla/websocket"
 )
 
-type ChatUsecase struct {
-	chatMessageRepo repository.ChatMessageRepository
-	logger          *logger.Logger
-	upgrader        websocket.Upgrader
-	chatClients     map[*websocket.Conn]bool
-	chatMessageTTL  time.Duration
+type ChatUseCase interface {
+	CreateMessage(ctx context.Context, msg entity.Message) (*entity.Message, error)
+	GetMessages(ctx context.Context) ([]entity.Message, error)
 }
 
-type ChatConfig struct {
-	MessageTTL time.Duration
+type chatUseCase struct {
+	repo repository.MessageRepository
 }
 
-func NewChatUsecase(
-	chatMessageRepo repository.ChatMessageRepository,
-	cfg *ChatConfig,
-	logger *logger.Logger,
-) *ChatUsecase {
-	return &ChatUsecase{
-		chatMessageRepo: chatMessageRepo,
-		logger:          logger,
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		},
-		chatClients:    make(map[*websocket.Conn]bool),
-		chatMessageTTL: cfg.MessageTTL,
-	}
+func NewChatUsecase(repo repository.MessageRepository) ChatUseCase {
+	return &chatUseCase{repo: repo}
 }
 
-func (uc *ChatUsecase) AddChatMessage(ctx context.Context, userID int64, content string) error {
-	message := &entity.ChatMessage{
-		UserID:    userID,
-		Content:   content,
-		CreatedAt: time.Now(),
+func (uc *chatUseCase) CreateMessage(ctx context.Context, msg entity.Message) (*entity.Message, error) {
+	message := repository.Message{
+		UserID:    msg.UserID,
+		Username:  msg.Username,
+		Content:   msg.Content,
+		CreatedAt: msg.CreatedAt,
 	}
 
-	_, err := uc.chatMessageRepo.CreateChatMessage(ctx, message)
+	created, err := uc.repo.Create(ctx, message)
 	if err != nil {
-		uc.logger.Errorw("Failed to create chat message", "error", err)
-		return err
+		return nil, err
 	}
-	uc.broadcastChatMessage(message)
-	return nil
+
+	return &entity.Message{
+		ID:        created.ID,
+		UserID:    created.UserID,
+		Username:  created.Username,
+		Content:   created.Content,
+		CreatedAt: created.CreatedAt,
+	}, nil
 }
 
-func (uc *ChatUsecase) broadcastChatMessage(message *entity.ChatMessage) {
-	for client := range uc.chatClients {
-		if err := client.WriteJSON(message); err != nil {
-			uc.logger.Warnw("Websocket write error", "error", err)
-			_ = client.Close()
-			delete(uc.chatClients, client)
+func (uc *chatUseCase) GetMessages(ctx context.Context) ([]entity.Message, error) {
+	messages, err := uc.repo.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entity.Message, len(messages))
+	for i, m := range messages {
+		result[i] = entity.Message{
+			ID:        m.ID,
+			UserID:    m.UserID,
+			Username:  m.Username,
+			Content:   m.Content,
+			CreatedAt: m.CreatedAt,
 		}
 	}
-}
 
-// Добавляем метод для доступа к upgrader
-func (uc *ChatUsecase) Upgrader() *websocket.Upgrader {
-	return &uc.upgrader
-}
-func (uc *ChatUsecase) HandleWebSocket(conn *websocket.Conn) {
-	uc.chatClients[conn] = true
-	defer func() {
-		delete(uc.chatClients, conn)
-		_ = conn.Close()
-	}()
-
-	for {
-		var msg entity.ChatMessage
-		if err := conn.ReadJSON(&msg); err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				uc.logger.Warnw("Websocket error", "error", err)
-			}
-			break
-		}
-
-		if err := uc.AddChatMessage(context.Background(), msg.UserID, msg.Content); err != nil {
-			uc.logger.Warnw("Failed to process chat message", "error", err)
-		}
-	}
+	return result, nil
 }

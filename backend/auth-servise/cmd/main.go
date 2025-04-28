@@ -125,6 +125,7 @@ func startHTTPServer(port string, controller *controller.HTTPAuthController, log
 	if err := http.ListenAndServe(port, router); err != nil {
 		logger.Fatal("Failed to start HTTP server: %v", err)
 	}
+	
 }
 
 func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error {

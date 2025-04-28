@@ -1,65 +1,150 @@
-// useWebSocket.js
-import { useState, useEffect } from 'react';
-const useWebSocket = (url) => {
-    const [socket, setSocket] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [connectionStatus, setConnectionStatus] = useState('disconnected');
+import { useEffect, useRef, useState, useCallback } from 'react';
 
-    useEffect(() => {
-        const ws = new WebSocket(url);
-        
-        ws.onopen = () => {
-            console.log('WebSocket connected');
-            setSocket(ws);
-            setConnectionStatus('connected');
-        };
+export function useWebSocket(url, { manual = false } = {}) {
+  const socketRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [messages, setMessages] = useState([]);
+  const [error, setError] = useState(null);
 
-        ws.onmessage = (event) => {
-            try {
-                const newMessage = JSON.parse(event.data);
-                setMessages(prev => [...prev, newMessage]);
-            } catch (err) {
-                console.error('Error parsing WebSocket message:', err);
-            }
-        };
+  const getWebSocketUrl = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Authentication token not found');
+      return null;
+    }
 
-        ws.onclose = () => {
-            console.log('WebSocket disconnected');
-            setSocket(null);
-            setConnectionStatus('disconnected');
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-                setConnectionStatus('reconnecting');
-            }, 5000);
-        };
+    try {
+      const wsUrl = new URL(url);
+      wsUrl.searchParams.set('token', token);
+      return wsUrl.toString();
+    } catch (e) {
+      console.error('Invalid WebSocket URL:', e);
+      setError('Invalid WebSocket URL');
+      return null;
+    }
+  }, [url]);
 
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            setConnectionStatus('error');
-        };
+  const handleIncomingMessage = useCallback((data) => {
+    if (data.type === 'AUTH_ERROR') {
+      console.error('Authentication error:', data.message);
+      setError(data.message);
+      disconnect();
+      localStorage.removeItem('token');
+      window.location.reload();
+      return;
+    }
+    setMessages(prev => [...prev, data]);
+  }, []);
 
-        return () => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.close();
-            }
-        };
-    }, [url]);
+  const connect = useCallback(() => {
+    const wsUrl = getWebSocketUrl();
+    if (!wsUrl) return;
 
-    const sendMessage = (message) => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify(message));
-        } else {
-            console.error('WebSocket is not connected');
-            // Optionally queue messages when disconnected
-        }
+    if (socketRef.current && 
+      [WebSocket.OPEN, WebSocket.CONNECTING].includes(socketRef.current.readyState)) {
+      console.warn('WebSocket already connecting or connected');
+      return;
+    }
+
+    setConnectionStatus('connecting');
+    console.log('Connecting to WebSocket...');
+
+    socketRef.current = new WebSocket(wsUrl);
+
+    socketRef.current.onopen = () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+      setConnectionStatus('connected');
+      setError(null);
     };
 
-    return { 
-        socket, 
-        messages, 
-        sendMessage, 
-        connectionStatus 
+    socketRef.current.onmessage = (event) => {
+      try {
+        const parsedData = JSON.parse(event.data);
+        handleIncomingMessage(parsedData);
+      } catch (e) {
+        console.warn('Non-JSON message:', event.data);
+        handleIncomingMessage({ content: event.data });
+      }
     };
-};
 
-export default useWebSocket; // Добавьте эту строку
+    socketRef.current.onerror = (event) => {
+      console.error('WebSocket error:', event);
+      setError('WebSocket connection error');
+      setConnectionStatus('error');
+    };
+
+    socketRef.current.onclose = (event) => {
+      console.log(`WebSocket closed: ${event.code} ${event.reason}`);
+      setIsConnected(false);
+      setConnectionStatus('disconnected');
+
+      if (!event.wasClean && event.code !== 1000) {
+        console.log('Reconnecting in 3 seconds...');
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, 3000);
+      }
+    };
+  }, [getWebSocketUrl, handleIncomingMessage]);
+
+  const disconnect = useCallback((permanent = false) => {
+    if (socketRef.current) {
+      if (permanent) {
+        socketRef.current.onclose = () => {};
+      }
+      socketRef.current.close(
+        permanent ? 1000 : 1001,
+        permanent ? 'Normal closure' : 'Reconnecting'
+      );
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+  }, []);
+
+  const sendMessage = useCallback((message) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      const messageWithAuth = {
+        ...message,
+        timestamp: new Date().toISOString(),
+        user_id: parseInt(localStorage.getItem('userId'), 10),
+        username: localStorage.getItem('username') || 'unknown',
+      };
+
+      try {
+        socketRef.current.send(JSON.stringify(messageWithAuth));
+      } catch (e) {
+        console.error('Error sending message:', e);
+        setError('Failed to send message');
+      }
+    } else {
+      console.error('Cannot send message - WebSocket not open');
+      setError('Connection not ready');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!manual) {
+      connect();
+    }
+
+    return () => {
+      disconnect(true);
+    };
+  }, [connect, disconnect, manual]);
+
+  return {
+    isConnected,
+    connectionStatus,
+    messages,
+    sendMessage,
+    connect,
+    disconnect,
+    error,
+  };
+}
+
+export default useWebSocket;

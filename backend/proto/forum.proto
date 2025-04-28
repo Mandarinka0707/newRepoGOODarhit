@@ -6,30 +6,30 @@ option go_package = "backend.com/forum/proto";
 
 import "google/protobuf/timestamp.proto";
 
-// Сервис для работы с форумом
+
 service ForumService {
-    // Категории
+  
     rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
     rpc GetCategory (GetCategoryRequest) returns (GetCategoryResponse);
     
-    // Темы
+ 
     rpc CreateTopic (CreateTopicRequest) returns (CreateTopicResponse);
     rpc GetTopic (GetTopicRequest) returns (GetTopicResponse);
     
-    // Сообщения
+  
     rpc CreateMessage (CreateMessageRequest) returns (CreateMessageResponse);
     rpc GetMessage (GetMessageRequest) returns (GetMessageResponse);
     
-    // Посты
+
     rpc CreatePost (CreatePostRequest) returns (CreatePostResponse);
     rpc GetPosts (GetPostsRequest) returns (GetPostsResponse);
     
-    // Чат
+   
     rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
     rpc StreamChatMessages (StreamChatMessagesRequest) returns (stream ChatMessage);
 }
 
-// Модели данных
+
 message Category {
     int64 id = 1;
     string name = 2;
@@ -66,12 +66,12 @@ message Post {
 message ChatMessage {
     int64 id = 1;
     int64 user_id = 2;
-    string username = 3;  // Добавьте это поле
+    string username = 3;  
     string content = 4;
     google.protobuf.Timestamp created_at = 5;
 }
 
-// Запросы и ответы для категорий
+
 message CreateCategoryRequest {
     string name = 1;
     string description = 2;
@@ -108,7 +108,7 @@ message GetTopicResponse {
     Topic topic = 1;
 }
 
-// Запросы и ответы для сообщений
+
 message CreateMessageRequest {
     int64 topic_id = 1;
     int64 user_id = 2;
@@ -127,7 +127,7 @@ message GetMessageResponse {
     Message message = 1;
 }
 
-// Запросы и ответы для постов
+
 message CreatePostRequest {
     string title = 1;
     string content = 2;

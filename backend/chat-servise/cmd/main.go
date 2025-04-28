@@ -1,114 +1,75 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"flag"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"backend.com/forum/chat-servise/internal/controller"
 	"backend.com/forum/chat-servise/internal/repository"
 	"backend.com/forum/chat-servise/internal/usecase"
 	"backend.com/forum/chat-servise/pkg/logger"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/lib/pq"
+	"github.com/rs/cors"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var (
+	port     = flag.String("port", ":8082", "HTTP server port")
+	dbURL    = flag.String("db-url", "postgres://user:password@localhost:5432/database?sslmode=disable", "Database connection URL")
+	logLevel = flag.String("log-level", "info", "Logging level")
 )
 
 func main() {
-	// 1. Инициализация логгера
-	log, err := logger.NewLogger("debug")
-	if err != nil {
-		fmt.Printf("Failed to create logger: %v\n", err)
-		os.Exit(1)
-	}
+	flag.Parse()
 
-	// 2. Подключение к базе данных
-	db, err := sqlx.Connect("postgres", "postgres://user:password@localhost:5432/database?sslmode=disable")
+	// Инициализация логгера
+	appLogger := logger.NewWithLevel(*logLevel)
+
+	// Подключение к базе данных через sqlx
+	db, err := sqlx.Connect("postgres", *dbURL)
 	if err != nil {
-		log.Error("Failed to connect to database", err)
-		os.Exit(1)
+		appLogger.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
-	// 3. Проверка соединения с базой данных
-	if err := db.Ping(); err != nil {
-		log.Error("Database ping failed", err)
-		os.Exit(1)
+	// Инициализация GORM
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: db.DB,
+	}), &gorm.Config{})
+	if err != nil {
+		appLogger.Fatalf("Failed to initialize GORM: %v", err)
 	}
 
-	// 4. Инициализация репозиториев
-	chatMessageRepo := repository.NewChatMessageRepository(db)
+	// Инициализация репозитория
+	messageRepo := repository.NewMessageRepository(gormDB)
 
-	// 5. Конфигурация юзкейса
-	chatConfig := &usecase.ChatConfig{
-		MessageTTL: 24 * time.Hour,
-	}
+	// Инициализация usecase
+	chatUseCase := usecase.NewChatUsecase(messageRepo)
 
-	// 6. Инициализация юзкейса
-	chatUsecase := usecase.NewChatUsecase(
-		chatMessageRepo,
-		chatConfig,
-		log,
-	)
+	// Инициализация контроллера
+	wsController := controller.NewWebSocketController(chatUseCase, appLogger)
 
-	// 7. Инициализация контроллера
-	chatController := controller.NewChatController(
-		chatUsecase,
-		log,
-	)
-
-	// 8. Настройка HTTP сервера
-	router := gin.Default()
-
-	// CORS configuration
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Authorization", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length"},
+	// Настройка CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
-	// WebSocket endpoint
-	router.GET("/ws", chatController.WebSocketHandler)
-
-	// Health check
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		MaxAge:           int(12 * time.Hour),
 	})
 
-	// 9. Graceful shutdown
-	server := &http.Server{
-		Addr:    ":8082",
-		Handler: router,
+	// Настройка маршрутизатора
+	router := mux.NewRouter()
+	router.HandleFunc("/ws", wsController.HandleWebSocket)
+	router.HandleFunc("/messages", wsController.GetMessages).Methods("GET")
+
+	// Запуск сервера
+	appLogger.Infof("Starting chat service on port %s", *port)
+	if err := http.ListenAndServe(*port, c.Handler(router)); err != nil {
+		appLogger.Fatalf("Failed to start server: %v", err)
 	}
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("Server error", err)
-			os.Exit(1)
-		}
-	}()
-
-	log.Info("Server started on :8080")
-
-	// Ожидание сигнала для завершения
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Error("Server shutdown error", err)
-	}
-
-	log.Info("Server stopped")
 }

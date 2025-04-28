@@ -1,50 +1,118 @@
+// pkg/logger/logger.go
 package logger
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"fmt"
+	"log"
+	"os"
+	"strings"
 )
 
-type Logger struct {
-	*zap.SugaredLogger
+type LogLevel int
+
+const (
+	LevelDebug LogLevel = iota
+	LevelInfo
+	LevelWarn
+	LevelError
+	LevelFatal
+)
+
+type Logger interface {
+	Debug(v ...interface{})
+	Debugf(format string, v ...interface{})
+	Info(v ...interface{})
+	Infof(format string, v ...interface{})
+	Warn(v ...interface{})
+	Warnf(format string, v ...interface{})
+	Error(v ...interface{})
+	Errorf(format string, v ...interface{})
+	Fatal(v ...interface{})
+	Fatalf(format string, v ...interface{})
 }
 
-func NewLogger(level string) (*Logger, error) {
-	cfg := zap.Config{
-		Encoding:         "console",
-		Level:            zap.NewAtomicLevel(),
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-		EncoderConfig:    zap.NewProductionEncoderConfig(),
-	}
+type logger struct {
+	log   *log.Logger
+	level LogLevel
+}
 
-	cfg.EncoderConfig.MessageKey = "message"
-	cfg.EncoderConfig.LevelKey = "level"
-	cfg.EncoderConfig.TimeKey = "time"
-	cfg.EncoderConfig.NameKey = "logger"
-	cfg.EncoderConfig.CallerKey = "caller"
-	cfg.EncoderConfig.StacktraceKey = "stacktrace"
-	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	cfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-	cfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-
-	switch level {
+func NewWithLevel(level string) Logger {
+	var lvl LogLevel
+	switch strings.ToLower(level) {
 	case "debug":
-		cfg.Level.SetLevel(zap.DebugLevel)
+		lvl = LevelDebug
 	case "info":
-		cfg.Level.SetLevel(zap.InfoLevel)
-	case "warn":
-		cfg.Level.SetLevel(zap.WarnLevel)
+		lvl = LevelInfo
+	case "warn", "warning":
+		lvl = LevelWarn
 	case "error":
-		cfg.Level.SetLevel(zap.ErrorLevel)
+		lvl = LevelError
+	case "fatal":
+		lvl = LevelFatal
 	default:
-		cfg.Level.SetLevel(zap.InfoLevel)
+		lvl = LevelInfo
 	}
 
-	zapLogger, err := cfg.Build()
-	if err != nil {
-		return nil, err
+	return &logger{
+		log:   log.New(os.Stdout, "[CHAT] ", log.LstdFlags|log.Lshortfile),
+		level: lvl,
 	}
-	return &Logger{zapLogger.Sugar()}, nil
+}
+
+func (l *logger) Debug(v ...interface{}) {
+	if l.level <= LevelDebug {
+		l.log.Output(2, "[DEBUG] "+fmt.Sprint(v...))
+	}
+}
+
+func (l *logger) Debugf(format string, v ...interface{}) {
+	if l.level <= LevelDebug {
+		l.log.Output(2, "[DEBUG] "+fmt.Sprintf(format, v...))
+	}
+}
+
+func (l *logger) Info(v ...interface{}) {
+	if l.level <= LevelInfo {
+		l.log.Output(2, "[INFO] "+fmt.Sprint(v...))
+	}
+}
+
+func (l *logger) Infof(format string, v ...interface{}) {
+	if l.level <= LevelInfo {
+		l.log.Output(2, "[INFO] "+fmt.Sprintf(format, v...))
+	}
+}
+
+func (l *logger) Warn(v ...interface{}) {
+	if l.level <= LevelWarn {
+		l.log.Output(2, "[WARN] "+fmt.Sprint(v...))
+	}
+}
+
+func (l *logger) Warnf(format string, v ...interface{}) {
+	if l.level <= LevelWarn {
+		l.log.Output(2, "[WARN] "+fmt.Sprintf(format, v...))
+	}
+}
+
+func (l *logger) Error(v ...interface{}) {
+	if l.level <= LevelError {
+		l.log.Output(2, "[ERROR] "+fmt.Sprint(v...))
+	}
+}
+
+func (l *logger) Errorf(format string, v ...interface{}) {
+	if l.level <= LevelError {
+		l.log.Output(2, "[ERROR] "+fmt.Sprintf(format, v...))
+	}
+}
+
+func (l *logger) Fatal(v ...interface{}) {
+	l.log.Output(2, "[FATAL] "+fmt.Sprint(v...))
+	os.Exit(1)
+}
+
+func (l *logger) Fatalf(format string, v ...interface{}) {
+	l.log.Output(2, "[FATAL] "+fmt.Sprintf(format, v...))
+	os.Exit(1)
 }

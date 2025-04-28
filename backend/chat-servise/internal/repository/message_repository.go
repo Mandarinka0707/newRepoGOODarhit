@@ -1,47 +1,41 @@
+// internal/repository/message_repository.go
 package repository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	"time"
 
-	"backend.com/forum/chat-servise/internal/entity"
-	"github.com/jmoiron/sqlx"
+	"gorm.io/gorm"
 )
 
+type Message struct {
+	ID        int64 `gorm:"primaryKey;autoIncrement:true"`
+	UserID    int64 `gorm:"column:user_id"`
+	Username  string
+	Content   string
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+}
+
 type MessageRepository interface {
-	CreateMessage(ctx context.Context, message *entity.Message) (int64, error)
-	GetMessage(ctx context.Context, id int64) (*entity.Message, error)
-	// ... другие методы
+	Create(ctx context.Context, message Message) (*Message, error)
+	GetAll(ctx context.Context) ([]Message, error)
 }
 
 type messageRepository struct {
-	db *sqlx.DB
+	db *gorm.DB
 }
 
-func NewMessageRepository(db *sqlx.DB) MessageRepository {
+func NewMessageRepository(db *gorm.DB) MessageRepository {
 	return &messageRepository{db: db}
 }
 
-func (r *messageRepository) CreateMessage(ctx context.Context, message *entity.Message) (int64, error) {
-	query := `INSERT INTO messages (topic_id, user_id, content, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
-	var id int64
-	err := r.db.QueryRowContext(ctx, query, message.TopicID, message.UserID, message.Content, message.CreatedAt).Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+func (r *messageRepository) Create(ctx context.Context, message Message) (*Message, error) {
+	result := r.db.WithContext(ctx).Table("chat_messages").Create(&message)
+	return &message, result.Error
 }
 
-func (r *messageRepository) GetMessage(ctx context.Context, id int64) (*entity.Message, error) {
-	query := `SELECT id, topic_id, user_id, content, created_at FROM messages WHERE id = $1`
-	message := &entity.Message{}
-	err := r.db.GetContext(ctx, message, query, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, sql.ErrNoRows
-		}
-		return nil, err
-	}
-	return message, nil
+func (r *messageRepository) GetAll(ctx context.Context) ([]Message, error) {
+	var messages []Message
+	result := r.db.WithContext(ctx).Table("chat_messages").Order("created_at asc").Find(&messages)
+	return messages, result.Error
 }
