@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"backend.com/forum/auth-servise/internal/domain"
+	domain "backend.com/forum/auth-servise/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 

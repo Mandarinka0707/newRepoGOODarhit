@@ -7,6 +7,5 @@ CREATE TABLE posts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 -- Добавим индекс для быстрого поиска по автору
 CREATE INDEX idx_posts_author_id ON posts(author_id);

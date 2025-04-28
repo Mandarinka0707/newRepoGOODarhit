@@ -5,14 +5,13 @@ import (
 	"database/sql"
 	"errors"
 
-	"backend.com/forum/forum-servise/internal/domain"
+	"backend.com/forum/forum-servise/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 
 type CategoryRepository interface {
-	CreateCategory(ctx context.Context, category *domain.Category) (int64, error)
-	GetCategory(ctx context.Context, id int64) (*domain.Category, error)
-	// ... другие методы
+	CreateCategory(ctx context.Context, category *entity.Category) (int64, error)
+	GetCategory(ctx context.Context, id int64) (*entity.Category, error)
 }
 
 type categoryRepository struct {
@@ -23,7 +22,7 @@ func NewCategoryRepository(db *sqlx.DB) CategoryRepository {
 	return &categoryRepository{db: db}
 }
 
-func (r *categoryRepository) CreateCategory(ctx context.Context, category *domain.Category) (int64, error) {
+func (r *categoryRepository) CreateCategory(ctx context.Context, category *entity.Category) (int64, error) {
 	query := `INSERT INTO categories (name, description, created_at) VALUES ($1, $2, $3) RETURNING id`
 	var id int64
 	err := r.db.QueryRowContext(ctx, query, category.Name, category.Description, category.CreatedAt).Scan(&id)
@@ -33,13 +32,13 @@ func (r *categoryRepository) CreateCategory(ctx context.Context, category *domai
 	return id, nil
 }
 
-func (r *categoryRepository) GetCategory(ctx context.Context, id int64) (*domain.Category, error) {
+func (r *categoryRepository) GetCategory(ctx context.Context, id int64) (*entity.Category, error) {
 	query := `SELECT id, name, description, created_at FROM categories WHERE id = $1`
-	category := &domain.Category{}
+	category := &entity.Category{}
 	err := r.db.GetContext(ctx, category, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, sql.ErrNoRows // Важно возвращать sql.ErrNoRows
+			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}

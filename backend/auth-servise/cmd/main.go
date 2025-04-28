@@ -1,7 +1,7 @@
+// cmd/main.go
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"backend.com/forum/auth-servise/internal/app"
+	"backend.com/forum/auth-servise/internal/controller"
 	"backend.com/forum/auth-servise/internal/repository"
+	"backend.com/forum/auth-servise/internal/usecase"
+	"backend.com/forum/auth-servise/pkg/auth"
 	"backend.com/forum/auth-servise/pkg/logger"
 
 	pb "backend.com/forum/proto"
@@ -27,80 +29,85 @@ import (
 )
 
 var (
-	grpcPort        = flag.String("port", ":50051", "the port to serve on")
-	httpPort        = flag.String("http_port", ":8080", "the HTTP port to serve on")
-	dbURL           = flag.String("db_url", "postgres://user:password@localhost:5432/database?sslmode=disable", "PostgreSQL connection string")
+	grpcPort        = flag.String("grpc-port", ":50051", "gRPC server port")
+	httpPort        = flag.String("http-port", ":8080", "HTTP server port")
+	dbURL           = flag.String("db-url", "postgres://user:password@localhost:5432/database?sslmode=disable", "Database connection URL")
 	migrationsPath  = flag.String("migrations_path", "/Users/darinautalieva/Desktop/GOProject/backend/auth-servise/migrations", "path to migrations files")
-	tokenSecret     = flag.String("token_secret", "your-secret-key", "JWT secret key")
-	tokenExpiration = flag.Duration("token_expiration", time.Minute*15, "JWT token expiration") // по умолчанию 1 час
-	logLevel        = flag.String("log_level", "info", "Log level (debug, info, warn, error)")
+	tokenSecret     = flag.String("token-secret", "secret", "JWT token secret")
+	tokenExpiration = flag.Duration("token-expiration", 24*time.Hour, "JWT token expiration")
+	logLevel        = flag.String("log-level", "info", "Logging level")
 )
 
 func main() {
 	flag.Parse()
 
-	// Инициализация логгера
+	// Initialize logger
 	logger, err := logger.NewLogger(*logLevel)
 	if err != nil {
-		log.Fatalf("failed to initialize logger: %v", err)
+		log.Fatalf("Failed to initialize logger: %v", err)
 	}
-	defer func() {
-		err := logger.Sync()
-		if err != nil {
-			log.Printf("failed to sync logger: %v", err)
-		}
-	}()
+	defer logger.Sync()
 
-	// Подключение к БД
+	// Database connection
 	db, err := sqlx.Connect("postgres", *dbURL)
 	if err != nil {
-		logger.Fatalf("failed to connect to database: %v", err)
+		logger.Fatal("Failed to connect to database: %v", err)
 	}
-	defer func() {
-		err := db.Close()
-		if err != nil {
-			logger.Errorf("failed to close database connection: %v", err)
-		}
-	}()
+	defer db.Close()
 
-	// Миграции БД
-	err = runMigrations(*dbURL, *migrationsPath, logger)
-	if err != nil {
-		logger.Fatalf("failed to run migrations: %v", err)
+	// Run migrations
+	if err := runMigrations(*dbURL, *migrationsPath, logger); err != nil {
+		logger.Fatal("Migrations failed: %v", err)
 	}
 
-	// Инициализация репозиториев
+	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	sessionRepo := repository.NewSessionRepository(db)
 
-	// Настройки для AuthService
-	cfg := &app.Config{
+	// Configure auth
+	authConfig := &auth.Config{
 		TokenSecret:     *tokenSecret,
 		TokenExpiration: *tokenExpiration,
 	}
 
-	// Инициализация AuthService
-	authService := app.NewAuthService(userRepo, sessionRepo, cfg, logger)
+	// Initialize use cases
+	authUseCase := usecase.NewAuthUsecase(
+		userRepo,
+		sessionRepo,
+		authConfig,
+		logger.ZapLogger(),
+	)
 
-	// Запуск gRPC-сервера
-	go func() {
-		lis, err := net.Listen("tcp", *grpcPort)
-		if err != nil {
-			logger.Fatalf("failed to listen: %v", err)
-		}
-		s := grpc.NewServer()
-		pb.RegisterAuthServiceServer(s, authService)
-		reflection.Register(s)
-		logger.Infof("gRPC service listening on %s", *grpcPort)
-		if err := s.Serve(lis); err != nil {
-			logger.Fatalf("failed to serve: %v", err)
-		}
-	}()
+	// Initialize controllers
+	grpcController := controller.NewAuthController(authUseCase)
+	httpController := controller.NewHTTPAuthController(authUseCase)
 
-	// Инициализация Gin
-	r := gin.Default()
+	// Start gRPC server
+	go startGRPCServer(*grpcPort, grpcController, logger)
 
-	r.Use(cors.New(cors.Config{
+	// Start HTTP server
+	startHTTPServer(*httpPort, httpController, logger)
+}
+
+func startGRPCServer(port string, controller *controller.AuthController, logger *logger.Logger) {
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		logger.Fatal("Failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+	pb.RegisterAuthServiceServer(s, controller)
+	reflection.Register(s)
+
+	logger.Info("Starting gRPC server on %s", port)
+	if err := s.Serve(lis); err != nil {
+		logger.Fatal("Failed to serve gRPC: %v", err)
+	}
+}
+
+func startHTTPServer(port string, controller *controller.HTTPAuthController, logger *logger.Logger) {
+	router := gin.Default()
+	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -109,54 +116,15 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Регистрация маршрутов
-	r.POST("/register", func(c *gin.Context) { handleRegister(c, authService, logger) })
-	r.POST("/login", func(c *gin.Context) { handleLogin(c, authService, logger) })
+	// Register HTTP routes
+	router.POST("/register", controller.Register)
+	router.POST("/login", controller.Login)
+	router.GET("/api/users/:id", controller.GetUser)
 
-	// Запуск HTTP-сервера
-	logger.Infof("HTTP service listening on %s", *httpPort)
-	if err := r.Run(*httpPort); err != nil {
-		logger.Fatalf("failed to run server: %v", err)
+	logger.Info("Starting HTTP server on %s", port)
+	if err := http.ListenAndServe(port, router); err != nil {
+		logger.Fatal("Failed to start HTTP server: %v", err)
 	}
-}
-
-func handleRegister(c *gin.Context, authService *app.AuthService, logger *logger.Logger) {
-	var req pb.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorw("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	logger.Infow("Register request received", "username", req.Username)
-
-	resp, err := authService.Register(context.Background(), &req)
-	if err != nil {
-		logger.Errorw("Failed to register user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	logger.Infow("User registered successfully", "user_id", resp.UserId)
-	c.JSON(http.StatusOK, gin.H{"user_id": resp.UserId})
-}
-
-func handleLogin(c *gin.Context, authService *app.AuthService, logger *logger.Logger) {
-	var req pb.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Errorw("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp, err := authService.Login(context.Background(), &req)
-	if err != nil {
-		logger.Errorw("Failed to login user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"token": resp.Token})
 }
 
 func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error {
@@ -167,170 +135,12 @@ func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error {
 	if err != nil {
 		return fmt.Errorf("failed to create migrate instance: %w", err)
 	}
-	defer func() {
-		err, sourceErr := m.Close()
-		if err != nil {
-			logger.Errorf("failed to close migrate instance: %v", err)
-		}
-		if sourceErr != nil {
-			logger.Errorf("failed to close migrate source: %v", sourceErr)
-		}
-	}()
+	defer m.Close()
 
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
-	logger.Info("Migrations completed successfully")
+
+	logger.Info("Database migrations applied successfully")
 	return nil
 }
-
-// func main() {
-// 	flag.Parse()
-
-// 	// Инициализация логгера
-// 	logger, err := logger.NewLogger(*logLevel)
-// 	if err != nil {
-// 		log.Fatalf("failed to initialize logger: %v", err)
-// 	}
-// 	defer func() {
-// 		err := logger.Sync()
-// 		if err != nil {
-// 			log.Printf("failed to sync logger: %v", err)
-// 		}
-// 	}()
-
-// 	// Подключение к БД
-// 	db, err := sqlx.Connect("postgres", *dbURL)
-// 	if err != nil {
-// 		logger.Fatalf("failed to connect to database: %v", err)
-// 	}
-// 	defer func() {
-// 		err := db.Close()
-// 		if err != nil {
-// 			logger.Errorf("failed to close database connection: %v", err)
-// 		}
-// 	}()
-
-// 	// Миграции БД
-// 	err = runMigrations(*dbURL, *migrationsPath, logger)
-// 	if err != nil {
-// 		logger.Fatalf("failed to run migrations: %v", err)
-// 	}
-
-// 	// Инициализация репозиториев
-// 	userRepo := repository.NewUserRepository(db)
-// 	sessionRepo := repository.NewSessionRepository(db)
-
-// 	// Настройки для AuthService
-// 	cfg := &app.Config{
-// 		TokenSecret:     *tokenSecret,
-// 		TokenExpiration: *tokenExpiration,
-// 	}
-
-// 	// Инициализация AuthService
-// 	authService := app.NewAuthService(userRepo, sessionRepo, cfg, logger)
-
-// 	// Запуск gRPC-сервера
-// 	go func() {
-// 		lis, err := net.Listen("tcp", *port)
-// 		if err != nil {
-// 			logger.Fatalf("failed to listen: %v", err)
-// 		}
-// 		s := grpc.NewServer()
-// 		pb.RegisterAuthServiceServer(s, authService)
-// 		reflection.Register(s)
-// 		logger.Infof("gRPC service listening on %s", *port)
-// 		if err := s.Serve(lis); err != nil {
-// 			logger.Fatalf("failed to serve: %v", err)
-// 		}
-// 	}()
-
-// 	// Инициализация Gin
-// 	r := gin.Default()
-
-// 	// Настройка CORS
-// 	r.Use(cors.New(cors.Config{
-// 		AllowOrigins:     []string{"http://localhost:3000"},
-// 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-// 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-// 		ExposeHeaders:    []string{"Content-Length"},
-// 		AllowCredentials: true,
-// 		MaxAge:           12 * time.Hour,
-// 	}))
-
-// 	// Регистрация маршрутов
-// 	r.POST("/register", func(c *gin.Context) { handleRegister(c, authService, logger) })
-// 	r.POST("/login", func(c *gin.Context) { handleLogin(c, authService, logger) })
-
-// 	// Запуск HTTP-сервера
-// 	logger.Infof("HTTP service listening on %s", *httpPort)
-// 	if err := r.Run(*httpPort); err != nil {
-// 		logger.Fatalf("failed to run server: %v", err)
-// 	}
-// }
-
-// func handleRegister(c *gin.Context, authService *app.AuthService, logger *logger.Logger) {
-// 	var req pb.RegisterRequest
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		logger.Errorw("Failed to bind JSON", "error", err)
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	logger.Infow("Register request received", "username", req.Username)
-
-// 	resp, err := authService.Register(context.Background(), &req)
-// 	if err != nil {
-// 		logger.Errorw("Failed to register user", "error", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	logger.Infow("User registered successfully", "user_id", resp.UserId)
-// 	c.JSON(http.StatusOK, gin.H{"user_id": resp.UserId})
-// }
-
-// func handleLogin(c *gin.Context, authService *app.AuthService, logger *logger.Logger) {
-// 	var req pb.LoginRequest
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		logger.Errorw("Failed to bind JSON", "error", err)
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	resp, err := authService.Login(context.Background(), &req)
-// 	if err != nil {
-// 		logger.Errorw("Failed to login user", "error", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"token": resp.Token})
-// }
-
-// func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error {
-// 	m, err := migrate.New(
-// 		"file://"+migrationsPath,
-// 		dbURL,
-// 	)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create migrate instance: %w", err)
-// 	}
-// 	defer func() {
-// 		err, sourceErr := m.Close()
-// 		if err != nil {
-// 			logger.Errorf("failed to close migrate instance: %v", err)
-// 		}
-// 		if sourceErr != nil {
-// 			logger.Errorf("failed to close migrate source: %v", sourceErr)
-// 		}
-// 	}()
-
-// 	err = m.Up()
-// 	if err != nil && err != migrate.ErrNoChange {
-// 		return fmt.Errorf("failed to run migrations: %w", err)
-// 	}
-// 	logger.Info("Migrations completed successfully")
-// 	return nil
-// }

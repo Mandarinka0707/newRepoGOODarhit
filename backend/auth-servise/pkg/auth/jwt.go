@@ -7,7 +7,11 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// GenerateToken generates a JWT token for the given user ID and role.
+type Config struct {
+	TokenSecret     string
+	TokenExpiration time.Duration
+}
+
 func GenerateToken(userID int64, role string, secret string, expiration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
@@ -18,7 +22,6 @@ func GenerateToken(userID int64, role string, secret string, expiration time.Dur
 	return token.SignedString([]byte(secret))
 }
 
-// ParseToken parses a JWT token and returns the claims.
 func ParseToken(tokenString string, secret string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

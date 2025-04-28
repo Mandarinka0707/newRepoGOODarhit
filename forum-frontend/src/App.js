@@ -6,7 +6,7 @@ import PostList from './components/Posts/PostList';
 import CreatePost from './components/Posts/CreatePost';
 import MainLayout from './components/Layout/MainLayout';
 import Chat from './components/Chat/Chat'; // Добавьте импорт
-import '/Users/darinautalieva/Desktop/GOProject/forum-frontend/src/components/MainLayout.css';
+import './components/MainLayout.css';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"backend.com/forum/auth-servise/internal/domain"
+	domain "backend.com/forum/auth-servise/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -39,7 +39,7 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 	err := r.db.GetContext(ctx, user, query, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, sql.ErrNoRows // Важно возвращать sql.ErrNoRows
+			return nil, sql.ErrNoRows
 		}
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (r *userRepository) GetUserByID(ctx context.Context, id int64) (*domain.Use
 	err := r.db.GetContext(ctx, user, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Или return nil, sql.ErrNoRows в зависимости от вашей логики
+			return nil, nil
 		}
 		return nil, err
 	}

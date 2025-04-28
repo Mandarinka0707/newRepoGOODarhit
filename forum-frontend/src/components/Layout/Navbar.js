@@ -13,7 +13,7 @@ const Navbar = () => {
 
     return (
         <nav className="navbar">
-            <h1 className="navTitle">MyForumGo</h1>
+            <h1 className="navTitle">Forum</h1>
             <div className="navLinks">
                 {isLoggedIn ? (
                     <>

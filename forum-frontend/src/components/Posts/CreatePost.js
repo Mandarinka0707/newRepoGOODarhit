@@ -32,7 +32,7 @@ const CreatePost = ({ onPostCreated }) => {
                 return;
             }
 
-            const response = await axios.post('http://localhost:8081/posts', {
+            const response = await axios.post('http://localhost:8081/api/v1/posts', {
                 title: newPost.title,
                 content: newPost.content
             }, {
@@ -44,7 +44,6 @@ const CreatePost = ({ onPostCreated }) => {
 
             setNewPost({ title: '', content: '' });
             onPostCreated();
-            alert('Post created successfully!');
         } catch (error) {
             console.error('Full error:', error);
             const errorMessage = error.response?.data?.error || 
