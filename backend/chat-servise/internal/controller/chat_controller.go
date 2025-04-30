@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"backend.com/forum/chat-servise/internal/entity"
-	"backend.com/forum/chat-servise/internal/usecase"
-	"backend.com/forum/chat-servise/pkg/auth"
-	"backend.com/forum/chat-servise/pkg/logger"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/usecase"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/pkg/auth"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/pkg/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -37,7 +37,7 @@ type Hub struct {
 }
 
 func NewWebSocketController(
-	authClient auth.Client,
+	authClient *auth.Client,
 	chatUseCase usecase.ChatUseCase,
 	l logger.Logger,
 ) *WebSocketController {
@@ -49,7 +49,7 @@ func NewWebSocketController(
 	}
 	go hub.run()
 	return &WebSocketController{
-		authClient:  authClient,
+		authClient:  *authClient,
 		chatUseCase: chatUseCase,
 		logger:      l,
 		hub:         hub,
@@ -63,7 +63,6 @@ func (c *WebSocketController) HandleWebSocket(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Validate token with auth service
 	user, err := c.authClient.ValidateToken(r.Context(), token)
 	if err != nil {
 		c.logger.Errorf("Invalid token: %v", err)
@@ -78,23 +77,38 @@ func (c *WebSocketController) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	}
 	defer conn.Close()
 
-	// Register client
 	c.hub.register <- conn
 	defer func() {
 		c.hub.unregister <- conn
 	}()
 
-	// Send message history
+	// Отправка истории сообщений
 	messages, err := c.chatUseCase.GetMessages(context.Background())
 	if err == nil {
+		type ResponseMessage struct {
+			ID        int64     `json:"id"`
+			UserID    int64     `json:"user_id"`
+			Username  string    `json:"username"`
+			Content   string    `json:"content"`
+			CreatedAt time.Time `json:"created_at"`
+		}
+
 		for _, msg := range messages {
-			if err := conn.WriteJSON(msg); err != nil {
+			responseMsg := ResponseMessage{
+				ID:        msg.ID,
+				UserID:    msg.UserID,
+				Username:  msg.Username,
+				Content:   msg.Content,
+				CreatedAt: msg.CreatedAt,
+			}
+
+			if err := conn.WriteJSON(responseMsg); err != nil {
 				c.logger.Errorf("Error sending history: %v", err)
 			}
 		}
 	}
 
-	// Handle incoming messages
+	// Обработка входящих сообщений
 	for {
 		var msg entity.Message
 		err := conn.ReadJSON(&msg)
@@ -105,18 +119,15 @@ func (c *WebSocketController) HandleWebSocket(w http.ResponseWriter, r *http.Req
 			break
 		}
 
-		// Set user info from validated token
 		msg.UserID = user.ID
 		msg.Username = user.Username
 		msg.CreatedAt = time.Now()
-
-		// Save message to database
+		c.logger.Infof("Authenticated user: ID=%d, Username=%s", user.ID, user.Username)
 		if _, err := c.chatUseCase.CreateMessage(context.Background(), msg); err != nil {
 			c.logger.Errorf("Error saving message: %v", err)
 			continue
 		}
 
-		// Broadcast to all clients
 		c.hub.broadcast <- msg
 	}
 }

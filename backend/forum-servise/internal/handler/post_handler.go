@@ -1,13 +1,17 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
+	"backend.com/forum/forum-servise/internal/repository"
 	"backend.com/forum/forum-servise/internal/usecase"
 	"backend.com/forum/forum-servise/pkg/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type PostHandler struct {
@@ -78,4 +82,40 @@ func (h *PostHandler) GetPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": response,
 	})
+}
+func (h *PostHandler) DeletePost(ctx *gin.Context) {
+	postID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		return
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+
+	h.logger.Debug("Attempting to delete post",
+		zap.Int64("post_id", postID),
+		zap.String("token", token),
+	)
+
+	if err := h.uc.DeletePost(ctx.Request.Context(), token, postID); err != nil {
+		h.logger.Error("Failed to delete post", err)
+
+		switch {
+		case errors.Is(err, repository.ErrPostNotFound):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		case errors.Is(err, repository.ErrPermissionDenied):
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission"})
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 }

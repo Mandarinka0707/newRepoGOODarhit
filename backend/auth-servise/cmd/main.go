@@ -14,6 +14,7 @@ import (
 	"backend.com/forum/auth-servise/internal/usecase"
 	"backend.com/forum/auth-servise/pkg/auth"
 	"backend.com/forum/auth-servise/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
 
 	pb "backend.com/forum/proto"
 
@@ -40,7 +41,13 @@ var (
 
 func main() {
 	flag.Parse()
-
+	password := "admin" // Замените на реальный пароль
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("PASSWORD     ")
+	fmt.Println(string(hash))
 	// Initialize logger
 	logger, err := logger.NewLogger(*logLevel)
 	if err != nil {
@@ -125,7 +132,7 @@ func startHTTPServer(port string, controller *controller.HTTPAuthController, log
 	if err := http.ListenAndServe(port, router); err != nil {
 		logger.Fatal("Failed to start HTTP server: %v", err)
 	}
-	
+
 }
 
 func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error {

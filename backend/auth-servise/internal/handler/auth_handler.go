@@ -74,3 +74,10 @@ func (h *AuthHandler) handleLogin(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"token": resp.Token})
 }
+func (h *AuthHandler) RegisterRoutes(router *gin.Engine) {
+	authGroup := router.Group("/auth")
+	{
+		authGroup.POST("/register", h.handleRegister)
+		authGroup.POST("/login", h.handleLogin)
+	}
+}

@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"backend.com/forum/chat-servise/internal/controller"
-	"backend.com/forum/chat-servise/internal/repository"
-	"backend.com/forum/chat-servise/internal/usecase"
-	"backend.com/forum/chat-servise/pkg/logger"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/controller"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/usecase"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/pkg/auth"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/pkg/logger"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -49,9 +50,17 @@ func main() {
 
 	// Инициализация usecase
 	chatUseCase := usecase.NewChatUsecase(messageRepo)
+	authClient, err := auth.NewClient("localhost:50051") // Укажите правильный адрес auth-service
+	if err != nil {
+		appLogger.Fatalf("Failed to create auth client: %v", err)
+	}
 
-	// Инициализация контроллера
-	wsController := controller.NewWebSocketController(chatUseCase, appLogger)
+	// Исправляем вызов NewWebSocketController
+	wsController := controller.NewWebSocketController(
+		authClient,
+		chatUseCase,
+		appLogger,
+	)
 
 	// Настройка CORS
 	c := cors.New(cors.Options{

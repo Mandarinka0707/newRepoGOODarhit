@@ -113,7 +113,9 @@ export function useWebSocket(url, { manual = false } = {}) {
         user_id: parseInt(localStorage.getItem('userId'), 10),
         username: localStorage.getItem('username') || 'unknown',
       };
-
+      const raw = localStorage.getItem('username');
+      console.log('Stored username:', raw); // должно быть нормальное имя
+      
       try {
         socketRef.current.send(JSON.stringify(messageWithAuth));
       } catch (e) {

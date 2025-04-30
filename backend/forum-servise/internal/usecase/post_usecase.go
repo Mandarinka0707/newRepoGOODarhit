@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -90,4 +91,33 @@ func (uc *PostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]st
 	}
 
 	return posts, authorNames, nil
+}
+func (uc *PostUsecase) DeletePost(ctx context.Context, token string, postID int64) error {
+	validateResp, err := uc.authClient.ValidateToken(ctx, &pb.ValidateTokenRequest{Token: token})
+	if err != nil {
+		return err
+	}
+	if !validateResp.Valid {
+		return errors.New("invalid token")
+	}
+
+	err = uc.postRepo.DeletePost(
+		ctx,
+		postID,
+		validateResp.UserId,
+		validateResp.Role,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return errors.New("post not found")
+		case errors.Is(err, repository.ErrPermissionDenied):
+			return errors.New("permission denied")
+		default:
+			return err
+		}
+	}
+
+	return nil
 }

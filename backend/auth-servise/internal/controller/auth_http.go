@@ -70,7 +70,8 @@ func (ctrl *HTTPAuthController) Login(c *gin.Context) {
 
 	// Используем gin.H вместо HTTPLoginResponse
 	c.JSON(http.StatusOK, gin.H{
-		"token": ucResp.Token,
+		"token":    ucResp.Token,
+		"username": ucResp.Username,
 	})
 }
 

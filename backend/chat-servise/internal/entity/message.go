@@ -4,11 +4,11 @@ package entity
 import "time"
 
 type Message struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	UserID    int64     `json:"user_id"`
-	Username  string    `json:"username"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int64     `gorm:"primaryKey;autoIncrement:true"`
+	UserID    int64     `gorm:"column:user_id"`
+	Username  string    `gorm:"column:username"`
+	Content   string    `gorm:"column:content"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 }
 
 type User struct {

@@ -4,8 +4,8 @@ package usecase
 import (
 	"context"
 
-	"backend.com/forum/chat-servise/internal/entity"
-	"backend.com/forum/chat-servise/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat-servise/internal/repository"
 )
 
 type ChatUseCase interface {

@@ -7,7 +7,8 @@ type RegisterResponse struct {
 }
 
 type LoginResponse struct {
-	Token string
+	Token    string
+	Username string
 }
 
 type ValidateTokenResponse struct {

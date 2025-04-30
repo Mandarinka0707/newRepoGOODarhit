@@ -10,8 +10,7 @@ service AuthService {
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc Login (LoginRequest) returns (LoginResponse);
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
-  rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
 }
 
 message RegisterRequest {
@@ -28,7 +27,11 @@ message LoginRequest {
   string password = 2;
 }
 
-
+message LoginResponse {
+  string token = 1;
+  int64 user_id = 2;      // Добавлено
+  string username = 3;    // Добавлено
+}
 
 message ValidateTokenRequest {
   string token = 1;
@@ -37,7 +40,8 @@ message ValidateTokenRequest {
 message ValidateTokenResponse {
   bool valid = 1;
   int64 user_id = 2;
-  string role = 3;
+  string username = 3;
+  string role = 4;
 }
 
 message GetUserRequest {
@@ -46,11 +50,6 @@ message GetUserRequest {
 
 message GetUserResponse {
   User user = 1;
-}
-message LoginResponse {
-  string token = 1;
-  int64 user_id = 2;   
-  string username = 3; 
 }
 
 message User {

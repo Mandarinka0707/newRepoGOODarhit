@@ -57,6 +57,7 @@ func (uc *AuthUsecase) Register(
 	user := &entity.User{
 		Username:  req.Username,
 		Password:  string(hashedPassword),
+		Role:      entity.RoleUser,
 		CreatedAt: time.Now(),
 	}
 
@@ -86,7 +87,8 @@ func (uc *AuthUsecase) Login(
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	token, err := auth.GenerateToken(user.ID, user.Role, uc.cfg.TokenSecret, uc.cfg.TokenExpiration)
+	token, err := auth.GenerateToken(user.ID, user.Role, user.Username, uc.cfg.TokenSecret, uc.cfg.TokenExpiration)
+
 	if err != nil {
 		uc.logger.Error("Token generation failed", zap.Error(err))
 		return nil, fmt.Errorf("internal server error")
@@ -103,7 +105,10 @@ func (uc *AuthUsecase) Login(
 		return nil, fmt.Errorf("internal server error")
 	}
 
-	return &LoginResponse{Token: token}, nil
+	return &LoginResponse{
+		Token:    token,
+		Username: user.Username, // Добавьте это
+	}, nil
 }
 
 func (uc *AuthUsecase) ValidateToken(

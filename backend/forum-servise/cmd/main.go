@@ -79,6 +79,7 @@ func main() {
 	// 7. Настройка маршрутизатора
 	router.POST("/api/v1/posts", postHandler.CreatePost)
 	router.GET("/api/v1/posts", postHandler.GetPosts)
+	router.DELETE("/api/v1/posts/:id", postHandler.DeletePost)
 
 	// 8. Настройка HTTP сервера
 	server := &http.Server{

@@ -52,7 +52,10 @@ func (c *AuthController) Login(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.LoginResponse{Token: ucResp.Token}, nil
+	return &pb.LoginResponse{
+		Token:    ucResp.Token,
+		Username: ucResp.Username, // Добавьте это
+	}, nil
 }
 
 func (c *AuthController) ValidateToken(

@@ -9,9 +9,9 @@ import (
 )
 
 type Message struct {
-	ID        int64 `gorm:"primaryKey;autoIncrement:true"`
-	UserID    int64 `gorm:"column:user_id"`
-	Username  string
+	ID        int64  `gorm:"primaryKey;autoIncrement:true"`
+	UserID    int64  `gorm:"column:user_id"`
+	Username  string `gorm:"column:username"`
 	Content   string
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 }

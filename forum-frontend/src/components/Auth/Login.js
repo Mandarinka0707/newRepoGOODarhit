@@ -11,9 +11,20 @@ const Login = () => {
     const handleLogin = async () => {
         try {
             const response = await axios.post('http://localhost:8080/login', { username, password });
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('userId', response.data.user_id); 
+            console.log('Login response:', response.data);
+            const token = response.data.token;
+            localStorage.setItem('token', token);
+
+            // Распарсить user_id из токена
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(atob(base64));
+            console.log(payload);
+            localStorage.setItem('userId', payload.user_id);
             localStorage.setItem('username', response.data.username);
+            localStorage.setItem('userRole', payload.role); 
+            
+        console.log('User role:', payload.role);
             navigate('/posts');
         } catch (error) {
             console.error('Login failed:', error);

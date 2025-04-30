@@ -12,11 +12,12 @@ type Config struct {
 	TokenExpiration time.Duration
 }
 
-func GenerateToken(userID int64, role string, secret string, expiration time.Duration) (string, error) {
+func GenerateToken(userID int64, role string, username string, secret string, expiration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": userID,
-		"role":    role,
-		"exp":     time.Now().Add(expiration).Unix(),
+		"user_id":  userID,
+		"role":     role,
+		"username": username,
+		"exp":      time.Now().Add(expiration).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))

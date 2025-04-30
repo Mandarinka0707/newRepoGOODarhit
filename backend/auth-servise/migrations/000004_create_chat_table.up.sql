@@ -12,3 +12,5 @@ CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at);
 
 -- Временно удалите внешний ключ (только для разработки)
 ALTER TABLE chat_messages DROP CONSTRAINT chat_messages_user_id_fkey;
+ALTER TABLE chat_messages 
+ALTER COLUMN username SET NOT NULL;

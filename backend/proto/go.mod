@@ -1,10 +1,11 @@
-module backend.com/forum/proto
+// proto/go.mod
+module github.com/Mandarinka0707/newRepoGOODarhit/proto
 
-go 1.24.0
+go 1.24
 
 require (
 	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.5
 )
 
 require (
