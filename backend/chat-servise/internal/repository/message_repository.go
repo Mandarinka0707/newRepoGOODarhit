@@ -1,41 +1,47 @@
-// internal/repository/message_repository.go
 package repository
 
 import (
-	"context"
-	"time"
-
-	"gorm.io/gorm"
+	"chat-microservice-go/internal/entity"
+	"database/sql"
+	"log"
 )
 
-type Message struct {
-	ID        int64  `gorm:"primaryKey;autoIncrement:true"`
-	UserID    int64  `gorm:"column:user_id"`
-	Username  string `gorm:"column:username"`
-	Content   string
-	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+type MessageRepository struct {
+	db *sql.DB
 }
 
-type MessageRepository interface {
-	Create(ctx context.Context, message Message) (*Message, error)
-	GetAll(ctx context.Context) ([]Message, error)
+func NewMessageRepository(db *sql.DB) *MessageRepository {
+	return &MessageRepository{db: db}
 }
 
-type messageRepository struct {
-	db *gorm.DB
+func (repo *MessageRepository) SaveMessage(msg entity.Message) error {
+	query := `INSERT INTO chat_messages (user_id, username, content) VALUES ($1, $2, $3)`
+	_, err := repo.db.Exec(query, 32, msg.Username, msg.Message)
+	if err != nil {
+		log.Printf("Error saving message: %v", err)
+		return err
+	}
+	return nil
 }
 
-func NewMessageRepository(db *gorm.DB) MessageRepository {
-	return &messageRepository{db: db}
-}
+func (repo *MessageRepository) GetMessages() ([]entity.Message, error) {
+	query := `SELECT id, username, content FROM chat_messages`
+	rows, err := repo.db.Query(query)
+	if err != nil {
+		log.Printf("Error getting messages: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-func (r *messageRepository) Create(ctx context.Context, message Message) (*Message, error) {
-	result := r.db.WithContext(ctx).Table("chat_messages").Create(&message)
-	return &message, result.Error
-}
-
-func (r *messageRepository) GetAll(ctx context.Context) ([]Message, error) {
-	var messages []Message
-	result := r.db.WithContext(ctx).Table("chat_messages").Order("created_at asc").Find(&messages)
-	return messages, result.Error
+	var messages []entity.Message
+	for rows.Next() {
+		var msg entity.Message
+		err := rows.Scan(&msg.ID, &msg.Username, &msg.Message)
+		if err != nil {
+			log.Printf("Error scanning message: %v", err)
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
 }

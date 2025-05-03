@@ -126,7 +126,6 @@ func startHTTPServer(port string, controller *controller.HTTPAuthController, log
 	// Register HTTP routes
 	router.POST("/register", controller.Register)
 	router.POST("/login", controller.Login)
-	router.GET("/api/users/:id", controller.GetUser)
 
 	logger.Info("Starting HTTP server on %s", port)
 	if err := http.ListenAndServe(port, router); err != nil {

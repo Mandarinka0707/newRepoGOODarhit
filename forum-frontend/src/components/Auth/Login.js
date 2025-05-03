@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -20,9 +21,10 @@ const Login = () => {
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const payload = JSON.parse(atob(base64));
             console.log(payload);
-            localStorage.setItem('userId', payload.user_id);
+            localStorage.setItem('userId', String(payload.user_id));
             localStorage.setItem('username', response.data.username);
             localStorage.setItem('userRole', payload.role); 
+            console.log('username', response.data.username);
             
         console.log('User role:', payload.role);
             navigate('/posts');
