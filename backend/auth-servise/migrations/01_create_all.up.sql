@@ -32,3 +32,15 @@ CREATE TABLE chat_messages (
 	content TEXT NOT NULL,
 	timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    author_id INT NOT NULL,
+    post_id INT NOT NULL,
+    author_name TEXT NOT NULL,
+    
+    -- Внешние ключи
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);

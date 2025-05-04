@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"backend.com/forum/forum-servise/internal/entity"
@@ -12,6 +13,7 @@ type PostRepository interface {
 	CreatePost(ctx context.Context, post *entity.Post) (int64, error)
 	GetPosts(ctx context.Context) ([]*entity.Post, error)
 	DeletePost(ctx context.Context, postID, authorID int64, role string) error
+	GetPostByID(ctx context.Context, id int64) (*entity.Post, error)
 }
 
 var (
@@ -104,4 +106,27 @@ func (r *postRepository) DeletePost(
 	}
 
 	return nil
+}
+func (r *postRepository) GetPostByID(ctx context.Context, id int64) (*entity.Post, error) {
+	query := `
+        SELECT 
+            p.id,
+            p.title,
+            p.content,
+            p.author_id,
+            p.created_at
+        FROM posts p
+        WHERE p.id = $1
+    `
+
+	var post entity.Post
+	err := r.db.GetContext(ctx, &post, query, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+
+	return &post, nil
 }

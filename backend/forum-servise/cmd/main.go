@@ -38,6 +38,10 @@ func main() {
 	}
 	defer db.Close()
 
+	_, err = db.ExecContext(context.Background(), "SELECT 1 FROM comments LIMIT 1")
+	if err != nil {
+		log.Fatal("Comments table does not exist or inaccessible: ", err)
+	}
 	router := gin.Default()
 
 	// CORS configuration
@@ -65,6 +69,7 @@ func main() {
 
 	// 4. Инициализация репозиториев
 	postRepo := repository.NewPostRepository(db)
+	commentRepo := repository.NewCommentRepository(db) // Убедитесь, что реализован
 
 	// 5. Инициализация юзкейсов
 	postUsecase := usecase.NewPostUsecase(
@@ -73,13 +78,21 @@ func main() {
 		log,
 	)
 
+	commentUC := usecase.NewCommentUseCase(commentRepo, postRepo, authClient)
+
 	// 6. Инициализация хендлеров
 	postHandler := handler.NewPostHandler(postUsecase, log)
+	commentHandler := handler.NewCommentHandler(commentUC)
 
 	// 7. Настройка маршрутизатора
+	// Маршруты для постов
 	router.POST("/api/v1/posts", postHandler.CreatePost)
 	router.GET("/api/v1/posts", postHandler.GetPosts)
 	router.DELETE("/api/v1/posts/:id", postHandler.DeletePost)
+
+	// Маршруты для комментариев
+	router.POST("/api/v1/posts/:id/comments", commentHandler.CreateComment)
+	router.GET("/api/v1/posts/:id/comments", commentHandler.GetCommentsByPostID)
 
 	// 8. Настройка HTTP сервера
 	server := &http.Server{
@@ -95,7 +108,7 @@ func main() {
 		}
 	}()
 
-	log.Info("Server started on :8081") // Исправлен порт в сообщении
+	log.Info("Server started on :8081")
 
 	// 10. Graceful shutdown
 	quit := make(chan os.Signal, 1)
