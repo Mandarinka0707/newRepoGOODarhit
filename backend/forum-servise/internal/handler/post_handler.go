@@ -119,3 +119,47 @@ func (h *PostHandler) DeletePost(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 }
+
+func (h *PostHandler) UpdatePost(ctx *gin.Context) {
+	postID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		return
+	}
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+
+	var request struct {
+		Title   string `json:"title" binding:"required"`
+		Content string `json:"content" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	updatedPost, err := h.uc.UpdatePost(ctx.Request.Context(), token, postID, request.Title, request.Content)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrPostNotFound):
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		case errors.Is(err, repository.ErrPermissionDenied):
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		default:
+			h.logger.Error("Failed to update post", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Post updated successfully",
+		"post":    updatedPost,
+	})
+}

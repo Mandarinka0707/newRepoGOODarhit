@@ -24,7 +24,6 @@ const PostList = ({ refreshTrigger }) => {
                 }
             });
     
-            // Проверка структуры ответа
             const rawPosts = response.data.data || response.data;
     
             if (!Array.isArray(rawPosts)) {
@@ -74,6 +73,37 @@ const PostList = ({ refreshTrigger }) => {
         }
     };
 
+    const handleUpdatePost = async (postId, currentTitle, currentContent) => {
+        const newTitle = prompt("Enter new title:", currentTitle);
+        const newContent = prompt("Enter new content:", currentContent);
+        
+        if (!newTitle || !newContent) return;
+
+        try {
+            await axios.put(
+                `http://localhost:8081/api/v1/posts/${postId}`,
+                {
+                    title: newTitle,
+                    content: newContent
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            
+            await fetchPosts();
+        } catch (error) {
+            console.error('Update post error:', error);
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.message || 
+                               'Failed to update post';
+            alert(errorMessage);
+        }
+    };
+
     return (
         <div className="post-list-container">
             {loading && <div className="loading-indicator">Loading posts...</div>}
@@ -83,17 +113,28 @@ const PostList = ({ refreshTrigger }) => {
                 <div key={post.id} className="post-item">
                     <div className="post-header">
                         <h3>{post.title}</h3>
-                        {(currentUserId === post.author_id || currentUserRole === 'admin') && (
-                            <button
-                                onClick={() => handleDeletePost(post.id, post.author_id)}
-                                className="delete-button"
-                                title={currentUserRole === 'admin' 
-                                    ? "Delete post (admin)" 
-                                    : "Delete your post"}
-                            >
-                                ✕
-                            </button>
-                        )}
+                        <div className="post-actions">
+                            {(currentUserId === post.author_id || currentUserRole === 'admin') && (
+                                <>
+                                    <button
+                                        onClick={() => handleUpdatePost(post.id, post.title, post.content)}
+                                        className="edit-button"
+                                        title="Edit post"
+                                    >
+                                        ✎
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeletePost(post.id, post.author_id)}
+                                        className="delete-button"
+                                        title={currentUserRole === 'admin' 
+                                            ? "Delete post (admin)" 
+                                            : "Delete your post"}
+                                    >
+                                        ✕
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <div className="post-content">
                         {post.content.split('\n').map((p, i) => (
@@ -117,7 +158,6 @@ const PostList = ({ refreshTrigger }) => {
                         )}
                     </div>
                     
-                    {/* Компонент комментариев */}
                     <Comments postId={post.id} />
                 </div>
             ))}

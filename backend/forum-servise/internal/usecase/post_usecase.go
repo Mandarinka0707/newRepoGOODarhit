@@ -121,3 +121,30 @@ func (uc *PostUsecase) DeletePost(ctx context.Context, token string, postID int6
 
 	return nil
 }
+
+func (uc *PostUsecase) UpdatePost(
+	ctx context.Context,
+	token string,
+	postID int64,
+	title,
+	content string,
+) (*entity.Post, error) {
+	validateResp, err := uc.authClient.ValidateToken(ctx, &pb.ValidateTokenRequest{Token: token})
+	if err != nil {
+		return nil, err
+	}
+	if !validateResp.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	updatedPost, err := uc.postRepo.UpdatePost(
+		ctx,
+		postID,
+		validateResp.UserId,
+		validateResp.Role,
+		title,
+		content,
+	)
+
+	return updatedPost, err
+}

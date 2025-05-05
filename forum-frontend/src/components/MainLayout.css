@@ -599,3 +599,20 @@ body {
   margin: 0;
   line-height: 1.5;
 }
+
+.post-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.edit-button:hover {
+  color: #2196F3;
+}

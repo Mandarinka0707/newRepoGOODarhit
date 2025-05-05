@@ -89,6 +89,7 @@ func main() {
 	router.POST("/api/v1/posts", postHandler.CreatePost)
 	router.GET("/api/v1/posts", postHandler.GetPosts)
 	router.DELETE("/api/v1/posts/:id", postHandler.DeletePost)
+	router.PUT("/api/v1/posts/:id", postHandler.UpdatePost)
 
 	// Маршруты для комментариев
 	router.POST("/api/v1/posts/:id/comments", commentHandler.CreateComment)
