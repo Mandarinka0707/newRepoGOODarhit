@@ -13,11 +13,11 @@ import (
 )
 
 type MessageHandler struct {
-	uc *usecase.MessageUseCase
+	Uc usecase.MessageUseCase
 }
 
-func NewMessageHandler(uc *usecase.MessageUseCase) *MessageHandler {
-	return &MessageHandler{uc: uc}
+func NewMessageHandler(uc usecase.MessageUseCase) *MessageHandler {
+	return &MessageHandler{Uc: uc}
 }
 
 func (h *MessageHandler) HandleConnections(c *gin.Context) {
@@ -36,7 +36,7 @@ func (h *MessageHandler) HandleConnections(c *gin.Context) {
 			delete(myWeb.Clients, ws)
 			break
 		}
-		h.uc.SaveMessage(msg)
+		h.Uc.SaveMessage(msg)
 		myWeb.Broadcast <- msg
 	}
 }
@@ -56,7 +56,7 @@ func (h *MessageHandler) HandleMessages() {
 }
 
 func (h *MessageHandler) GetMessages(c *gin.Context) {
-	messages, err := h.uc.GetMessages()
+	messages, err := h.Uc.GetMessages()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

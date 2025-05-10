@@ -1,3 +1,4 @@
+// auth_usecase.go
 package usecase
 
 import (
@@ -14,11 +15,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthUsecase struct { // Изменено имя на AuthUsecase
+type AuthUsecase struct {
 	userRepo    repository.UserRepository
 	sessionRepo repository.SessionRepository
 	cfg         *auth.Config
 	logger      *zap.Logger
+}
+type AuthUsecaseInterface interface {
+	Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error)
+	Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
+	GetUserByID(ctx context.Context, userID string) (*entity.User, error)
+	ValidateToken(ctx context.Context, req *ValidateTokenRequest) (*ValidateTokenResponse, error)
+	GetUser(ctx context.Context, req *GetUserRequest) (*GetUserResponse, error)
 }
 
 func (uc *AuthUsecase) GetUserByID(ctx context.Context, userID string) (*entity.User, error) {
@@ -34,7 +42,7 @@ func NewAuthUsecase(
 	sessionRepo repository.SessionRepository,
 	cfg *auth.Config,
 	logger *zap.Logger,
-) *AuthUsecase { // Добавляем возвращаемый тип
+) *AuthUsecase {
 	return &AuthUsecase{
 		userRepo:    userRepo,
 		sessionRepo: sessionRepo,
@@ -43,7 +51,6 @@ func NewAuthUsecase(
 	}
 }
 
-// usecase/auth_usecase.go
 func (uc *AuthUsecase) Register(
 	ctx context.Context,
 	req *RegisterRequest,
@@ -70,44 +77,39 @@ func (uc *AuthUsecase) Register(
 	return &RegisterResponse{UserID: userID}, nil
 }
 
-func (uc *AuthUsecase) Login(
-	ctx context.Context,
-	req *LoginRequest,
-) (*LoginResponse, error) {
-	uc.logger.Info("Login request received", zap.String("username", req.Username))
-
-	user, err := uc.userRepo.GetUserByUsername(ctx, req.Username)
+func (u *AuthUsecase) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
+	user, err := u.userRepo.GetUserByUsername(ctx, req.Username)
 	if err != nil {
-		uc.logger.Error("User not found", zap.Error(err))
-		return nil, fmt.Errorf("invalid credentials")
+		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		uc.logger.Error("Invalid password", zap.Error(err))
-		return nil, fmt.Errorf("invalid credentials")
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	token, err := auth.GenerateToken(user.ID, user.Role, user.Username, uc.cfg.TokenSecret, uc.cfg.TokenExpiration)
-
+	// Генерация токена
+	token, err := auth.GenerateToken(user.ID, user.Role, user.Username, u.cfg.TokenSecret, u.cfg.TokenExpiration)
 	if err != nil {
-		uc.logger.Error("Token generation failed", zap.Error(err))
+		u.logger.Error("failed to generate token", zap.Error(err))
 		return nil, fmt.Errorf("internal server error")
 	}
 
+	// Создание сессии только если токен успешно сгенерировачн
 	session := &entity.Session{
 		UserID:    user.ID,
 		Token:     token,
-		ExpiresAt: time.Now().Add(uc.cfg.TokenExpiration),
+		ExpiresAt: time.Now().Add(u.cfg.TokenExpiration),
 	}
 
-	if err := uc.sessionRepo.CreateSession(ctx, session); err != nil {
-		uc.logger.Error("Session creation failed", zap.Error(err))
+	if err := u.sessionRepo.CreateSession(ctx, session); err != nil {
+		u.logger.Error("failed to create session", zap.Error(err))
 		return nil, fmt.Errorf("internal server error")
 	}
 
 	return &LoginResponse{
 		Token:    token,
-		Username: user.Username, // Добавьте это
+		Username: user.Username,
 	}, nil
 }
 
@@ -155,7 +157,7 @@ func (uc *AuthUsecase) GetUser(
 	uc.logger.Info("Get user request", zap.Int64("user_id", req.UserID))
 
 	user, err := uc.userRepo.GetUserByID(ctx, req.UserID)
-	if err != nil {
+	if err != nil || user == nil {
 		uc.logger.Error("User not found", zap.Error(err))
 		return nil, fmt.Errorf("user not found")
 	}

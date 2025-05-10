@@ -1,19 +1,18 @@
-// internal/usecase/comment_usecase.go
 package usecase
 
 import (
 	"context"
+	"errors"
 
 	"backend.com/forum/forum-servise/internal/entity"
 	"backend.com/forum/forum-servise/internal/repository"
 	pb "backend.com/forum/proto"
 )
 
-// internal/usecase/comment_usecase.go
 type CommentUseCase struct {
-	commentRepo repository.CommentRepository
+	CommentRepo repository.CommentRepository
 	postRepo    repository.PostRepository
-	AuthClient  pb.AuthServiceClient // Делаем поле публичным
+	AuthClient  pb.AuthServiceClient
 }
 
 func NewCommentUseCase(
@@ -22,41 +21,60 @@ func NewCommentUseCase(
 	authClient pb.AuthServiceClient,
 ) *CommentUseCase {
 	return &CommentUseCase{
-		commentRepo: commentRepo,
+		CommentRepo: commentRepo,
 		postRepo:    postRepo,
-		AuthClient:  authClient, // Исправляем здесь
+		AuthClient:  authClient,
 	}
 }
+
 func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Comment) error {
+	// Проверяем существование поста
 	_, err := uc.postRepo.GetPostByID(ctx, comment.PostID)
 	if err != nil {
 		return err
 	}
-	return uc.commentRepo.CreateComment(ctx, comment)
+
+	// Получаем информацию о пользователе
+	userResp, err := uc.AuthClient.GetUser(ctx, &pb.GetUserRequest{Id: comment.AuthorID})
+	if err != nil || userResp == nil || userResp.User == nil {
+		return errors.New("failed to get user info")
+	}
+
+	comment.AuthorName = userResp.User.Username
+	return uc.CommentRepo.CreateComment(ctx, comment)
 }
 
 func (uc *CommentUseCase) GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error) {
-	comments, err := uc.commentRepo.GetCommentsByPostID(ctx, postID)
+	// Проверяем существование поста
+	_, err := uc.postRepo.GetPostByID(ctx, postID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Получаем имена авторов
-	for i := range comments {
-		userResponse, err := uc.AuthClient.GetUser(ctx, &pb.GetUserRequest{
-			Id: comments[i].AuthorID,
-		})
-
-		if err == nil && userResponse != nil && userResponse.User != nil {
-			comments[i].AuthorName = userResponse.User.Username
-		} else {
-			comments[i].AuthorName = "Unknown"
-		}
-	}
-
-	return comments, nil
+	return uc.CommentRepo.GetCommentsByPostID(ctx, postID)
 }
 
-func (uc *CommentUseCase) DeleteComment(ctx context.Context, id int64) error {
-	return uc.commentRepo.DeleteComment(ctx, id)
-}
+// func (uc *CommentUseCase) DeleteComment(ctx context.Context, id int64) error {
+// 	// Получаем комментарий
+// 	comments, err := uc.CommentRepo.GetCommentsByPostID(ctx, id)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if len(comments) == 0 {
+// 		return sql.ErrNoRows
+// 	}
+// 	comment := comments[0]
+
+// 	// Проверяем права доступа
+// 	userResp, err := uc.AuthClient.GetUser(ctx, &pb.GetUserRequest{Id: comment.AuthorID})
+// 	if err != nil || userResp == nil || userResp.User == nil {
+// 		return errors.New("failed to verify user")
+// 	}
+
+// 	// Проверяем, что пользователь является автором
+// 	if userResp.User.Id != comment.AuthorID {
+// 		return errors.New("permission denied")
+// 	}
+
+// 	return uc.CommentRepo.DeleteComment(ctx, id)
+// }

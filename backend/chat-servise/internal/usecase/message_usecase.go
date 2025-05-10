@@ -6,18 +6,23 @@ import (
 	"chat-microservice-go/internal/repository"
 )
 
-type MessageUseCase struct {
-	repo *repository.MessageRepository
+type MessageUseCase interface {
+	SaveMessage(msg entity.Message) error
+	GetMessages() ([]entity.Message, error)
 }
 
-func NewMessageUseCase(repo *repository.MessageRepository) *MessageUseCase {
-	return &MessageUseCase{repo: repo}
+type messageUseCase struct {
+	repo repository.MessageRepository
 }
 
-func (uc *MessageUseCase) SaveMessage(msg entity.Message) error {
+func NewMessageUseCase(repo repository.MessageRepository) MessageUseCase {
+	return &messageUseCase{repo: repo}
+}
+
+func (uc *messageUseCase) SaveMessage(msg entity.Message) error {
 	return uc.repo.SaveMessage(msg)
 }
 
-func (uc *MessageUseCase) GetMessages() ([]entity.Message, error) {
+func (uc *messageUseCase) GetMessages() ([]entity.Message, error) {
 	return uc.repo.GetMessages()
 }

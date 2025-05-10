@@ -58,24 +58,6 @@ func (c *AuthController) Login(
 	}, nil
 }
 
-func (c *AuthController) ValidateToken(
-	ctx context.Context,
-	req *pb.ValidateTokenRequest,
-) (*pb.ValidateTokenResponse, error) {
-	ucReq := &usecase.ValidateTokenRequest{Token: req.Token}
-
-	ucResp, err := c.uc.ValidateToken(ctx, ucReq) // Добавлен контекст
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &pb.ValidateTokenResponse{
-		Valid:  ucResp.Valid,
-		UserId: ucResp.UserID,
-		Role:   ucResp.Role,
-	}, nil
-}
-
 func (c *AuthController) GetUser(
 	ctx context.Context,
 	req *pb.GetUserRequest,
@@ -99,4 +81,21 @@ func convertUserToProto(user *entity.User) *pb.User {
 		Role:      string(user.Role),
 		CreatedAt: timestamppb.New(user.CreatedAt),
 	}
+}
+func (c *AuthController) ValidateToken(
+	ctx context.Context,
+	req *pb.ValidateTokenRequest,
+) (*pb.ValidateTokenResponse, error) {
+	ucReq := &usecase.ValidateTokenRequest{Token: req.Token}
+
+	ucResp, err := c.uc.ValidateToken(ctx, ucReq) // Добавлен контекст
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.ValidateTokenResponse{
+		Valid:  ucResp.Valid,
+		UserId: ucResp.UserID,
+		Role:   ucResp.Role,
+	}, nil
 }

@@ -9,24 +9,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var (
+	ErrPostNotFound     = errors.New("post not found")
+	ErrPermissionDenied = errors.New("permission denied")
+)
+
 type PostRepository interface {
 	CreatePost(ctx context.Context, post *entity.Post) (int64, error)
 	GetPosts(ctx context.Context) ([]*entity.Post, error)
-	DeletePost(ctx context.Context, postID, authorID int64, role string) error
 	GetPostByID(ctx context.Context, id int64) (*entity.Post, error)
-	UpdatePost(
-		ctx context.Context,
-		postID int64,
-		authorID int64,
-		role string,
-		title, content string,
-	) (*entity.Post, error)
+	DeletePost(ctx context.Context, id, authorID int64, role string) error
+	UpdatePost(ctx context.Context, id, authorID int64, role, title, content string) (*entity.Post, error)
 }
-
-var (
-	ErrPermissionDenied = errors.New("permission denied")
-	ErrPostNotFound     = errors.New("post not found")
-)
 
 type postRepository struct {
 	db *sqlx.DB
@@ -40,8 +34,8 @@ func (r *postRepository) CreatePost(ctx context.Context, post *entity.Post) (int
 	query := `
 		INSERT INTO posts (title, content, author_id, created_at)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id
-	`
+		RETURNING id`
+
 	var id int64
 	err := r.db.QueryRowContext(ctx, query,
 		post.Title,
@@ -49,82 +43,42 @@ func (r *postRepository) CreatePost(ctx context.Context, post *entity.Post) (int
 		post.AuthorID,
 		post.CreatedAt,
 	).Scan(&id)
+
 	return id, err
 }
 
 func (r *postRepository) GetPosts(ctx context.Context) ([]*entity.Post, error) {
 	query := `
-        SELECT 
-            p.id,
-            p.title,
-            p.content,
-            p.author_id,  
-            p.created_at
-        FROM posts p
-        ORDER BY p.created_at DESC
-    `
+		SELECT 
+			id,
+			title,
+			content,
+			author_id,
+			created_at
+		FROM posts
+		ORDER BY created_at DESC`
 
 	var posts []*entity.Post
 	err := r.db.SelectContext(ctx, &posts, query)
-	return posts, err
-}
-func (r *postRepository) DeletePost(
-	ctx context.Context,
-	postID,
-	authorID int64,
-	role string,
-) error {
-	// 1. Проверяем существование поста
-	var exists bool
-	err := r.db.GetContext(
-		ctx,
-		&exists,
-		"SELECT EXISTS(SELECT 1 FROM posts WHERE id = $1)",
-		postID,
-	)
 	if err != nil {
-		return err
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*entity.Post{}, nil
+		}
+		return nil, err
 	}
-	if !exists {
-		return ErrPostNotFound
-	}
-
-	// 2. Выполняем удаление с проверкой прав
-	query := `
-        DELETE FROM posts 
-        WHERE id = $1 
-        AND (author_id = $2 OR $3 = 'admin')
-    `
-	result, err := r.db.ExecContext(
-		ctx,
-		query,
-		postID,   // $1
-		authorID, // $2
-		role,     // $3 <-- Важно! Проверьте порядок параметров
-	)
-	if err != nil {
-		return err
-	}
-
-	// 3. Проверяем результат
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return ErrPermissionDenied
-	}
-
-	return nil
+	return posts, nil
 }
+
 func (r *postRepository) GetPostByID(ctx context.Context, id int64) (*entity.Post, error) {
 	query := `
-        SELECT 
-            p.id,
-            p.title,
-            p.content,
-            p.author_id,
-            p.created_at
-        FROM posts p
-        WHERE p.id = $1
-    `
+		SELECT 
+			id,
+			title,
+			content,
+			author_id,
+			created_at
+		FROM posts
+		WHERE id = $1`
 
 	var post entity.Post
 	err := r.db.GetContext(ctx, &post, query, id)
@@ -134,47 +88,44 @@ func (r *postRepository) GetPostByID(ctx context.Context, id int64) (*entity.Pos
 		}
 		return nil, err
 	}
-
 	return &post, nil
 }
 
-func (r *postRepository) UpdatePost(
-	ctx context.Context,
-	postID int64,
-	authorID int64,
-	role string,
-	title,
-	content string,
-) (*entity.Post, error) {
-	// 1. Проверяем существование поста
-	var exists bool
-	err := r.db.GetContext(
-		ctx,
-		&exists,
-		"SELECT EXISTS(SELECT 1 FROM posts WHERE id = $1)",
-		postID,
-	)
+func (r *postRepository) DeletePost(ctx context.Context, id, authorID int64, role string) error {
+	query := `
+		DELETE FROM posts 
+		WHERE id = $1 
+		AND (author_id = $2 OR $3 = 'admin')`
+
+	result, err := r.db.ExecContext(ctx, query, id, authorID, role)
 	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, ErrPostNotFound
+		return err
 	}
 
-	// 2. Выполняем обновление
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrPostNotFound
+	}
+
+	return nil
+}
+
+func (r *postRepository) UpdatePost(ctx context.Context, id, authorID int64, role, title, content string) (*entity.Post, error) {
 	query := `
-        UPDATE posts 
-        SET title = $1, content = $2 
-        WHERE id = $3 
-        AND (author_id = $4 OR $5 = 'admin')
-        RETURNING id, title, content, author_id, created_at
-    `
+		UPDATE posts
+		SET title = $1, content = $2
+		WHERE id = $3 AND (author_id = $4 OR $5 = 'admin')
+		RETURNING id, title, content, author_id, created_at`
 
 	var post entity.Post
-	err = r.db.QueryRowContext(ctx, query,
+	err := r.db.QueryRowContext(ctx, query,
 		title,
 		content,
-		postID,
+		id,
 		authorID,
 		role,
 	).Scan(
@@ -187,7 +138,7 @@ func (r *postRepository) UpdatePost(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrPermissionDenied
+			return nil, ErrPostNotFound
 		}
 		return nil, err
 	}

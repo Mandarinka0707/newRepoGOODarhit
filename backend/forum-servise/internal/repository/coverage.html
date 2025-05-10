@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>repository: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">backend.com/forum/forum-servise/internal/repository/comment_repository.go (92.9%)</option>
+				
+				<option value="file1">backend.com/forum/forum-servise/internal/repository/post-repository.go (92.3%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package repository
+
+import (
+        "context"
+        "database/sql"
+        "errors"
+
+        "backend.com/forum/forum-servise/internal/entity"
+        "github.com/jmoiron/sqlx"
+)
+
+type CommentRepository interface {
+        CreateComment(ctx context.Context, comment *entity.Comment) error
+        GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error)
+        DeleteComment(ctx context.Context, id int64) error
+}
+
+type CommentRepo struct {
+        db *sqlx.DB
+}
+
+func NewCommentRepository(db *sqlx.DB) CommentRepository <span class="cov8" title="1">{
+        return &amp;CommentRepo{db: db}
+}</span>
+
+func (r *CommentRepo) CreateComment(ctx context.Context, comment *entity.Comment) error <span class="cov8" title="1">{
+        query := `INSERT INTO comments (content, author_id, post_id, author_name) 
+        VALUES ($1, $2, $3, $4) RETURNING id`
+        return r.db.QueryRowContext(ctx, query,
+                comment.Content,
+                comment.AuthorID,
+                comment.PostID,
+                comment.AuthorName,
+        ).Scan(&amp;comment.ID)
+}</span>
+
+func (r *CommentRepo) GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error) <span class="cov8" title="1">{
+        query := `
+        SELECT 
+            id,
+            content,
+            author_id,
+            post_id,
+            author_name
+        FROM comments 
+        WHERE post_id = $1
+        ORDER BY id DESC`
+
+        var comments []entity.Comment
+        err := r.db.SelectContext(ctx, &amp;comments, query, postID)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov0" title="0">{
+                        return []entity.Comment{}, nil
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return comments, nil</span>
+}
+
+func (r *CommentRepo) DeleteComment(ctx context.Context, id int64) error <span class="cov8" title="1">{
+        query := `DELETE FROM comments WHERE id = $1`
+        _, err := r.db.ExecContext(ctx, query, id)
+        return err
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package repository
+
+import (
+        "context"
+        "database/sql"
+        "errors"
+
+        "backend.com/forum/forum-servise/internal/entity"
+        "github.com/jmoiron/sqlx"
+)
+
+var (
+        ErrPostNotFound     = errors.New("post not found")
+        ErrPermissionDenied = errors.New("permission denied")
+)
+
+type PostRepository interface {
+        CreatePost(ctx context.Context, post *entity.Post) (int64, error)
+        GetPosts(ctx context.Context) ([]*entity.Post, error)
+        GetPostByID(ctx context.Context, id int64) (*entity.Post, error)
+        DeletePost(ctx context.Context, id, authorID int64, role string) error
+        UpdatePost(ctx context.Context, id, authorID int64, role, title, content string) (*entity.Post, error)
+}
+
+type postRepository struct {
+        db *sqlx.DB
+}
+
+func NewPostRepository(db *sqlx.DB) PostRepository <span class="cov8" title="1">{
+        return &amp;postRepository{db: db}
+}</span>
+
+func (r *postRepository) CreatePost(ctx context.Context, post *entity.Post) (int64, error) <span class="cov8" title="1">{
+        query := `
+                INSERT INTO posts (title, content, author_id, created_at)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id`
+
+        var id int64
+        err := r.db.QueryRowContext(ctx, query,
+                post.Title,
+                post.Content,
+                post.AuthorID,
+                post.CreatedAt,
+        ).Scan(&amp;id)
+
+        return id, err
+}</span>
+
+func (r *postRepository) GetPosts(ctx context.Context) ([]*entity.Post, error) <span class="cov8" title="1">{
+        query := `
+                SELECT 
+                        id,
+                        title,
+                        content,
+                        author_id,
+                        created_at
+                FROM posts
+                ORDER BY created_at DESC`
+
+        var posts []*entity.Post
+        err := r.db.SelectContext(ctx, &amp;posts, query)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov0" title="0">{
+                        return []*entity.Post{}, nil
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return posts, nil</span>
+}
+
+func (r *postRepository) GetPostByID(ctx context.Context, id int64) (*entity.Post, error) <span class="cov8" title="1">{
+        query := `
+                SELECT 
+                        id,
+                        title,
+                        content,
+                        author_id,
+                        created_at
+                FROM posts
+                WHERE id = $1`
+
+        var post entity.Post
+        err := r.db.GetContext(ctx, &amp;post, query, id)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov8" title="1">{
+                        return nil, ErrPostNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return &amp;post, nil</span>
+}
+
+func (r *postRepository) DeletePost(ctx context.Context, id, authorID int64, role string) error <span class="cov8" title="1">{
+        query := `
+                DELETE FROM posts 
+                WHERE id = $1 
+                AND (author_id = $2 OR $3 = 'admin')`
+
+        result, err := r.db.ExecContext(ctx, query, id, authorID, role)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">rowsAffected, err := result.RowsAffected()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if rowsAffected == 0 </span><span class="cov8" title="1">{
+                return ErrPostNotFound
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (r *postRepository) UpdatePost(ctx context.Context, id, authorID int64, role, title, content string) (*entity.Post, error) <span class="cov8" title="1">{
+        query := `
+                UPDATE posts
+                SET title = $1, content = $2
+                WHERE id = $3 AND (author_id = $4 OR $5 = 'admin')
+                RETURNING id, title, content, author_id, created_at`
+
+        var post entity.Post
+        err := r.db.QueryRowContext(ctx, query,
+                title,
+                content,
+                id,
+                authorID,
+                role,
+        ).Scan(
+                &amp;post.ID,
+                &amp;post.Title,
+                &amp;post.Content,
+                &amp;post.AuthorID,
+                &amp;post.CreatedAt,
+        )
+
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov8" title="1">{
+                        return nil, ErrPostNotFound
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+
+        <span class="cov8" title="1">return &amp;post, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

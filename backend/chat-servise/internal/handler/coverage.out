@@ -1,0 +1,15 @@
+mode: set
+chat-microservice-go/internal/handler/message_handler.go:19.67,21.2 1 1
+chat-microservice-go/internal/handler/message_handler.go:23.60,25.16 2 1
+chat-microservice-go/internal/handler/message_handler.go:25.16,27.3 1 0
+chat-microservice-go/internal/handler/message_handler.go:28.2,32.6 3 1
+chat-microservice-go/internal/handler/message_handler.go:32.6,35.17 3 1
+chat-microservice-go/internal/handler/message_handler.go:35.17,37.9 2 1
+chat-microservice-go/internal/handler/message_handler.go:39.3,40.25 2 1
+chat-microservice-go/internal/handler/message_handler.go:44.43,45.6 1 1
+chat-microservice-go/internal/handler/message_handler.go:45.6,47.37 2 1
+chat-microservice-go/internal/handler/message_handler.go:47.37,49.18 2 1
+chat-microservice-go/internal/handler/message_handler.go:49.18,53.5 3 0
+chat-microservice-go/internal/handler/message_handler.go:58.54,60.16 2 1
+chat-microservice-go/internal/handler/message_handler.go:60.16,63.3 2 0
+chat-microservice-go/internal/handler/message_handler.go:64.2,64.33 1 1

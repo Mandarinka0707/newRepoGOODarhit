@@ -17,6 +17,12 @@ type PostUsecase struct {
 	authClient pb.AuthServiceClient
 	logger     *logger.Logger
 }
+type PostUsecaseInterface interface {
+	CreatePost(ctx context.Context, token, title, content string) (*entity.Post, error)
+	GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error)
+	DeletePost(ctx context.Context, token string, postID int64) error
+	UpdatePost(ctx context.Context, token string, postID int64, title, content string) (*entity.Post, error)
+}
 
 func NewPostUsecase(
 	postRepo repository.PostRepository,

@@ -15,11 +15,11 @@ import (
 )
 
 type PostHandler struct {
-	uc     *usecase.PostUsecase
+	uc     usecase.PostUsecaseInterface
 	logger *logger.Logger
 }
 
-func NewPostHandler(uc *usecase.PostUsecase, logger *logger.Logger) *PostHandler {
+func NewPostHandler(uc usecase.PostUsecaseInterface, logger *logger.Logger) *PostHandler {
 	return &PostHandler{uc: uc, logger: logger}
 }
 

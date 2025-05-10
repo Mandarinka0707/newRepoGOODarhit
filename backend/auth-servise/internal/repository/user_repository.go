@@ -6,23 +6,30 @@ import (
 	"errors"
 
 	domain "backend.com/forum/auth-servise/internal/entity"
-	"github.com/jmoiron/sqlx"
 )
+
+// DBTX определяет интерфейс, который реализуют как *sqlx.DB, так и моки
+type DBTX interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *domain.User) (int64, error)
 	GetUserByUsername(ctx context.Context, username string) (*domain.User, error)
-	GetUserByID(ctx context.Context, id int64) (*domain.User, error) // Добавьте этот метод
+	GetUserByID(ctx context.Context, id int64) (*domain.User, error)
 }
 
 type userRepository struct {
-	db *sqlx.DB
+	db DBTX
 }
 
-func NewUserRepository(db *sqlx.DB) UserRepository {
+// NewUserRepository создает новый экземпляр UserRepository
+func NewUserRepository(db DBTX) UserRepository {
 	return &userRepository{db: db}
 }
 
+// CreateUser сохраняет пользователя и возвращает его ID
 func (r *userRepository) CreateUser(ctx context.Context, user *domain.User) (int64, error) {
 	query := `INSERT INTO users (username, password, role, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
 	var id int64
@@ -33,6 +40,7 @@ func (r *userRepository) CreateUser(ctx context.Context, user *domain.User) (int
 	return id, nil
 }
 
+// GetUserByUsername возвращает пользователя по имени
 func (r *userRepository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
 	query := `SELECT id, username, password, role, created_at FROM users WHERE username = $1`
 	user := &domain.User{}
@@ -45,6 +53,8 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 	}
 	return user, nil
 }
+
+// GetUserByID возвращает пользователя по ID
 func (r *userRepository) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
 	query := `SELECT id, username, password, role, created_at FROM users WHERE id = $1`
 	user := &domain.User{}

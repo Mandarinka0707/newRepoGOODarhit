@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>usecase: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">backend.com/forum/forum-servise/internal/usecase/comment_usecase.go (93.3%)</option>
+				
+				<option value="file1">backend.com/forum/forum-servise/internal/usecase/post_usecase.go (89.4%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package usecase
+
+import (
+        "context"
+        "database/sql"
+        "errors"
+
+        "backend.com/forum/forum-servise/internal/entity"
+        "backend.com/forum/forum-servise/internal/repository"
+        pb "backend.com/forum/proto"
+)
+
+type CommentUseCase struct {
+        CommentRepo repository.CommentRepository
+        postRepo    repository.PostRepository
+        AuthClient  pb.AuthServiceClient
+}
+
+func NewCommentUseCase(
+        commentRepo repository.CommentRepository,
+        postRepo repository.PostRepository,
+        authClient pb.AuthServiceClient,
+) *CommentUseCase <span class="cov8" title="1">{
+        return &amp;CommentUseCase{
+                CommentRepo: commentRepo,
+                postRepo:    postRepo,
+                AuthClient:  authClient,
+        }
+}</span>
+
+func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Comment) error {
+        // Прове�</span><span class="cov8" title="1">�яем существование поста
+        _, err := uc.postRepo.GetPostByID(ctx, comment.PostID)
+        i</span>f err != nil {
+        <span class="cov8" title="1">        return err
+</span>        }
+
+        // Получаем информацию о пользователе
+        userResp, err := uc.AuthClient.GetUser(ctx, &amp;pb.GetUserRequest{Id: comment.AuthorID})
+        if err != nil </span><span class="cov0" title="0">|| userResp == nil || userResp.User == nil {
+                return errors.New("failed to get user info")
+        }</span>
+
+        comment.AuthorName = userResp.User.Username
+        <span class="cov8" title="1">return uc.CommentRepo.Cr</span><span class="cov8" title="1">eateComment(ctx, comment)
+}
+
+func (uc *CommentUseCase) GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error) {
+        // Проверяем существование поста
+        _, err := uc.postRepo.GetPostByID(ctx, postID)
+</span>        if err != nil {
+                r</span>eturn<span class="cov8" title="1"> nil, err
+        }
+
+</span>        return uc.CommentRepo.GetCommentsByPostID(ctx, postID)
+}
+
+</span>func (uc *CommentUseCase) DeleteComment(ctx context.Context, id int64) error {
+        // Получаем комментарий
+        comments, err := uc.CommentRepo.GetCommentsByPostID(ctx, id)
+        if err != nil {
+        </span>        return err
+        }
+        if len(comments) == 0 {
+                return sql.ErrNoRows
+        }
+        comment := comments[0]
+
+        // Проверяем права доступа
+        userResp, err := uc.AuthClient.GetUser(ctx, &amp;pb.GetUserRequest{Id: comment.AuthorID})
+        if err != nil || userResp == nil || userResp.User == nil {
+                return errors.New("failed to verify user")
+        }
+
+        // Проверяем, что пользователь является автором
+        if userResp.User.Id != comment.AuthorID {
+                return errors.New("permission denied")
+        }
+
+        return uc.CommentRepo.DeleteComment(ctx, id)
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package usecase
+
+import (
+        "context"
+        "database/sql"
+        "errors"
+        "time"
+
+        "backend.com/forum/forum-servise/internal/entity"
+        "backend.com/forum/forum-servise/internal/repository"
+        "backend.com/forum/forum-servise/pkg/logger"
+        pb "backend.com/forum/proto"
+)
+
+type PostUsecase struct {
+        postRepo   repository.PostRepository
+        authClient pb.AuthServiceClient
+        logger     *logger.Logger
+}
+type PostUsecaseInterface interface {
+        CreatePost(ctx context.Context, token, title, content string) (*entity.Post, error)
+        GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error)
+        DeletePost(ctx context.Context, token string, postID int64) error
+        UpdatePost(ctx context.Context, token string, postID int64, title, content string) (*entity.Post, error)
+}
+
+func NewPostUsecase(
+        postRepo repository.PostRepository,
+        authClient pb.AuthServiceClient,
+        logger *logger.Logger,
+) *PostUsecase <span class="cov0" title="0">{
+        return &amp;PostUsecase{
+                postRepo:   postRepo,
+                authClient: authClient,
+                logger:     logger,
+        }
+}</span>
+
+func (uc *PostUsecase) CreatePost(ctx context.Context, token string, title, content string) (*entity.Post, error) <span class="cov8" title="1">{
+        // Validate the token to get user ID
+        validateResp, err := uc.authClient.ValidateToken(ctx, &amp;pb.ValidateTokenRequest{Token: token})
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">if !validateResp.Valid </span><span class="cov8" title="1">{
+                return nil, errors.New("invalid token")
+        }</span>
+        <span class="cov8" title="1">userID := validateResp.UserId
+
+        post := &amp;entity.Post{
+                Title:     title,
+                Content:   content,
+                AuthorID:  userID, // Use userID here
+                CreatedAt: time.Now(),
+        }
+
+        id, err := uc.postRepo.CreatePost(ctx, post)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">post.ID = id
+        return post, nil</span>
+}
+
+// В файле usecase/post.go
+func (uc *PostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error) <span class="cov8" title="1">{
+        posts, err := uc.postRepo.GetPosts(ctx)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, nil, err
+        }</span>
+
+        <span class="cov8" title="1">authorNames := make(map[int]string)
+
+        // Get unique author IDs
+        authorIDs := make([]int64, 0, len(posts))
+        for _, post := range posts </span><span class="cov8" title="1">{
+                authorIDs = append(authorIDs, post.AuthorID)
+        }</span>
+
+        // Fetch usernames for each author ID
+        <span class="cov8" title="1">for _, authorID := range authorIDs </span><span class="cov8" title="1">{
+                userResponse, err := uc.authClient.GetUser(ctx, &amp;pb.GetUserRequest{
+                        Id: authorID,
+                })
+
+                if err == nil &amp;&amp; userResponse.User != nil </span><span class="cov8" title="1">{
+                        authorNames[int(authorID)] = userResponse.User.Username // Corrected line
+                }</span>
+        }
+
+        // Fallback for any missing usernames
+        <span class="cov8" title="1">for _, post := range posts </span><span class="cov8" title="1">{
+                if _, exists := authorNames[int(post.AuthorID)]; !exists </span><span class="cov8" title="1">{
+                        authorNames[int(post.AuthorID)] = "Unknown"
+                }</span>
+        }
+
+        <span class="cov8" title="1">return posts, authorNames, nil</span>
+}
+func (uc *PostUsecase) DeletePost(ctx context.Context, token string, postID int64) error <span class="cov8" title="1">{
+        validateResp, err := uc.authClient.ValidateToken(ctx, &amp;pb.ValidateTokenRequest{Token: token})
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">if !validateResp.Valid </span><span class="cov8" title="1">{
+                return errors.New("invalid token")
+        }</span>
+
+        <span class="cov8" title="1">err = uc.postRepo.DeletePost(
+                ctx,
+                postID,
+                validateResp.UserId,
+                validateResp.Role,
+        )
+
+        if err != nil </span><span class="cov8" title="1">{
+                switch </span>{
+                case errors.Is(err, sql.ErrNoRows):<span class="cov8" title="1">
+                        return errors.New("post not found")</span>
+                case errors.Is(err, repository.ErrPermissionDenied):<span class="cov8" title="1">
+                        return errors.New("permission denied")</span>
+                default:<span class="cov0" title="0">
+                        return err</span>
+                }
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (uc *PostUsecase) UpdatePost(
+        ctx context.Context,
+        token string,
+        postID int64,
+        title,
+        content string,
+) (*entity.Post, error) <span class="cov8" title="1">{
+        validateResp, err := uc.authClient.ValidateToken(ctx, &amp;pb.ValidateTokenRequest{Token: token})
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">if !validateResp.Valid </span><span class="cov8" title="1">{
+                return nil, errors.New("invalid token")
+        }</span>
+
+        <span class="cov8" title="1">updatedPost, err := uc.postRepo.UpdatePost(
+                ctx,
+                postID,
+                validateResp.UserId,
+                validateResp.Role,
+                title,
+                content,
+        )
+
+        return updatedPost, err</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

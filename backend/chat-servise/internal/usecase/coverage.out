@@ -1,0 +1,4 @@
+mode: set
+chat-microservice-go/internal/usecase/message_usecase.go:18.64,20.2 1 1
+chat-microservice-go/internal/usecase/message_usecase.go:22.65,24.2 1 1
+chat-microservice-go/internal/usecase/message_usecase.go:26.67,28.2 1 1
