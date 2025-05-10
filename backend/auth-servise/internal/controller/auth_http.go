@@ -26,6 +26,18 @@ type HTTPLoginRequest struct {
 	Password string `json:"password"`
 }
 
+// Register регистрирует пользователя через HTTP
+//
+// @Summary Регистрация пользователя через HTTP
+// @Description Регистрирует нового пользователя, используя HTTP
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPRegisterRequest true "Данные для регистрации"
+// @Success 200 {object} map[string]interface{} "Ответ с ID пользователя"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /auth/register [post]
 func (ctrl *HTTPAuthController) Register(c *gin.Context) {
 	var req HTTPRegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -50,6 +62,18 @@ func (ctrl *HTTPAuthController) Register(c *gin.Context) {
 	})
 }
 
+// Login выполняет аутентификацию пользователя через HTTP
+//
+// @Summary Логин пользователя через HTTP
+// @Description Выполняет аутентификацию пользователя, используя HTTP
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPLoginRequest true "Данные для входа"
+// @Success 200 {object} map[string]interface{} "Ответ с токеном и именем пользователя"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /auth/login [post]
 func (ctrl *HTTPAuthController) Login(c *gin.Context) {
 	var req HTTPLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -75,6 +99,18 @@ func (ctrl *HTTPAuthController) Login(c *gin.Context) {
 	})
 }
 
+// GetUser получает информацию о пользователе через HTTP
+//
+// @Summary Получить информацию о пользователе через HTTP
+// @Description Получает информацию о пользователе по ID через HTTP
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param id path string true "ID пользователя"
+// @Success 200 {object} map[string]interface{} "Ответ с данными пользователя"
+// @Failure 404 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /auth/user/{id} [get]
 func (ctrl *HTTPAuthController) GetUser(ctx *gin.Context) {
 	userID := ctx.Param("id")
 

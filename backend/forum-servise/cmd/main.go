@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "backend.com/forum/forum-servise/docs"
 	"backend.com/forum/forum-servise/internal/handler"
 	"backend.com/forum/forum-servise/internal/repository"
 	"backend.com/forum/forum-servise/internal/usecase"
@@ -18,19 +19,40 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // PostgreSQL driver
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// @title Forum Service API
+// @version 1.0
+// @description API for managing forum posts and comments
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8081
+// @BasePath /api/v1
+// @schemes http
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
-	// 1. Инициализация логгера
+	// 1. Initialize logger
 	log, err := logger.NewLogger("debug")
 	if err != nil {
 		fmt.Printf("Failed to create logger: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 2. Подключение к базе данных
+	// 2. Connect to database
 	db, err := sqlx.Connect("postgres", "postgres://user:password@localhost:5432/database?sslmode=disable")
 	if err != nil {
 		log.Error("Failed to connect to database", err)
@@ -38,10 +60,12 @@ func main() {
 	}
 	defer db.Close()
 
+	// Verify tables exist
 	_, err = db.ExecContext(context.Background(), "SELECT 1 FROM comments LIMIT 1")
 	if err != nil {
 		log.Fatal("Comments table does not exist or inaccessible: ", err)
 	}
+
 	router := gin.Default()
 
 	// CORS configuration
@@ -54,7 +78,10 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 3. Подключение к gRPC сервису аутентификации
+	// Swagger documentation route
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 3. Connect to auth gRPC service
 	authConn, err := grpc.Dial(
 		"localhost:50051",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -67,41 +94,43 @@ func main() {
 
 	authClient := pb.NewAuthServiceClient(authConn)
 
-	// 4. Инициализация репозиториев
+	// 4. Initialize repositories
 	postRepo := repository.NewPostRepository(db)
-	commentRepo := repository.NewCommentRepository(db) // Убедитесь, что реализован
+	commentRepo := repository.NewCommentRepository(db)
 
-	// 5. Инициализация юзкейсов
+	// 5. Initialize use cases
 	postUsecase := usecase.NewPostUsecase(
 		postRepo,
 		authClient,
 		log,
 	)
-
 	commentUC := usecase.NewCommentUseCase(commentRepo, postRepo, authClient)
 
-	// 6. Инициализация хендлеров
+	// 6. Initialize handlers
 	postHandler := handler.NewPostHandler(postUsecase, log)
 	commentHandler := handler.NewCommentHandler(commentUC)
 
-	// 7. Настройка маршрутизатора
-	// Маршруты для постов
-	router.POST("/api/v1/posts", postHandler.CreatePost)
-	router.GET("/api/v1/posts", postHandler.GetPosts)
-	router.DELETE("/api/v1/posts/:id", postHandler.DeletePost)
-	router.PUT("/api/v1/posts/:id", postHandler.UpdatePost)
+	// 7. Setup API routes
+	api := router.Group("/api/v1")
+	{
+		// Post routes
+		api.POST("/posts", postHandler.CreatePost)
+		api.GET("/posts", postHandler.GetPosts)
+		api.DELETE("/posts/:id", postHandler.DeletePost)
+		api.PUT("/posts/:id", postHandler.UpdatePost)
 
-	// Маршруты для комментариев
-	router.POST("/api/v1/posts/:id/comments", commentHandler.CreateComment)
-	router.GET("/api/v1/posts/:id/comments", commentHandler.GetCommentsByPostID)
+		// Comment routes
+		api.POST("/posts/:id/comments", commentHandler.CreateComment)
+		api.GET("/posts/:id/comments", commentHandler.GetCommentsByPostID)
+	}
 
-	// 8. Настройка HTTP сервера
+	// 8. Configure HTTP server
 	server := &http.Server{
 		Addr:    ":8081",
 		Handler: router,
 	}
 
-	// 9. Запуск сервера
+	// 9. Start server
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error("Server error", err)

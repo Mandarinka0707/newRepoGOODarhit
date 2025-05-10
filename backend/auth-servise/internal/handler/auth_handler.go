@@ -27,6 +27,18 @@ func NewAuthHandler(authUsecase usecase.AuthUsecaseInterface, logger *zap.Logger
 	}
 }
 
+// handleRegister обрабатывает регистрацию пользователя.
+//
+// @Summary Регистрация пользователя
+// @Description Регистрирует нового пользователя
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body usecase.RegisterRequest true "Данные для регистрации"
+// @Success 200 {object} map[string]interface{} "user_id"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /auth/register [post]
 func (h *AuthHandler) handleRegister(c *gin.Context) {
 	var req usecase.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -45,6 +57,18 @@ func (h *AuthHandler) handleRegister(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user_id": resp.UserID})
 }
 
+// handleLogin обрабатывает авторизацию пользователя.
+//
+// @Summary Авторизация пользователя
+// @Description Логин по имени пользователя и паролю
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body usecase.LoginRequest true "Данные для входа"
+// @Success 200 {object} map[string]interface{} "token"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /auth/login [post]
 func (h *AuthHandler) handleLogin(c *gin.Context) {
 	var req usecase.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

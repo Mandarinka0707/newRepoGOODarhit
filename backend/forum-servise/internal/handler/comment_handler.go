@@ -21,6 +21,21 @@ func NewCommentHandler(commentUC *usecase.CommentUseCase) *CommentHandler {
 	return &CommentHandler{commentUC: commentUC}
 }
 
+// CreateComment godoc
+// @Summary Create a new comment
+// @Description Create a new comment for a specific post
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Post ID"
+// @Param request body entity.Comment true "Comment data"
+// @Success 201 {object} entity.Comment
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 401 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts/{id}/comments [post]
 func (h *CommentHandler) CreateComment(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
@@ -89,6 +104,17 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 	})
 }
 
+// GetCommentsByPostID godoc
+// @Summary Get comments for a post
+// @Description Get all comments for a specific post
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID"
+// @Success 200 {object} []entity.Comment
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts/{id}/comments [get]
 func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 	postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

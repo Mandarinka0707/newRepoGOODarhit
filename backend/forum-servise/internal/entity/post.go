@@ -3,9 +3,9 @@ package entity
 import "time"
 
 type Post struct {
-	ID        int64     `db:"id"`
-	Title     string    `db:"title"`
-	Content   string    `db:"content"`
-	AuthorID  int64     `db:"author_id"`
-	CreatedAt time.Time `db:"created_at"`
+	ID        int64     `json:"id" db:"id" example:"123"`
+	Title     string    `json:"title" db:"title" example:"My Post Title"`
+	Content   string    `json:"content" db:"content" example:"Post content text"`
+	AuthorID  int64     `json:"author_id" db:"author_id" example:"456"`
+	CreatedAt time.Time `json:"created_at" db:"created_at" example:"2023-01-01T00:00:00Z"`
 }

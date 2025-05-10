@@ -55,6 +55,15 @@ func (h *MessageHandler) HandleMessages() {
 	}
 }
 
+// GetMessages получает список всех сообщений.
+//
+// @Summary Получить сообщения
+// @Description Возвращает все сообщения из чата
+// @Tags messages
+// @Produce json
+// @Success 200 {array} entity.Message
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /messages [get]
 func (h *MessageHandler) GetMessages(c *gin.Context) {
 	messages, err := h.Uc.GetMessages()
 	if err != nil {

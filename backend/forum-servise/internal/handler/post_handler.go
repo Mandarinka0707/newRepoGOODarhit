@@ -23,6 +23,21 @@ func NewPostHandler(uc usecase.PostUsecaseInterface, logger *logger.Logger) *Pos
 	return &PostHandler{uc: uc, logger: logger}
 }
 
+// CreatePost godoc
+// @Summary Create a new post
+// @Description Create a new forum post with title and content
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer token"
+// @Param request body entity.Post true "Post data"
+// @Success 201 {object} entity.Post
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 401 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts [post]
+
 func (h *PostHandler) CreatePost(ctx *gin.Context) {
 	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
@@ -56,6 +71,16 @@ func (h *PostHandler) CreatePost(ctx *gin.Context) {
 	})
 }
 
+// GetPosts godoc
+// @Summary Get all posts
+// @Description Get list of all forum posts with author information
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Success 200 {array} entity.Post
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts [get]
+
 func (h *PostHandler) GetPosts(c *gin.Context) {
 	posts, authorNames, err := h.uc.GetPosts(c.Request.Context())
 	if err != nil {
@@ -83,6 +108,23 @@ func (h *PostHandler) GetPosts(c *gin.Context) {
 		"data": response,
 	})
 }
+
+// DeletePost godoc
+// @Summary Delete a post
+// @Description Delete a forum post by ID (only author or admin can delete)
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Post ID"
+// @Success 200 {object} entity.SuccessResponse
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 401 {object} entity.ErrorResponse
+// @Failure 403 {object} entity.ErrorResponse
+// @Failure 404 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts/{id} [delete]
 func (h *PostHandler) DeletePost(ctx *gin.Context) {
 	postID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -120,6 +162,23 @@ func (h *PostHandler) DeletePost(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 }
 
+// UpdatePost godoc
+// @Summary Update a post
+// @Description Update an existing forum post (only author can update)
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Bearer token"
+// @Param id path int true "Post ID"
+// @Param request body entity.Post true "Update data"
+// @Success 200 {object} entity.Post
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 401 {object} entity.ErrorResponse
+// @Failure 403 {object} entity.ErrorResponse
+// @Failure 404 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/posts/{id} [put]
 func (h *PostHandler) UpdatePost(ctx *gin.Context) {
 	postID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
