@@ -2,8 +2,8 @@
 package usecase
 
 import (
-	"chat-microservice-go/internal/entity"
-	"chat-microservice-go/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/repository"
 )
 
 type MessageUseCase interface {

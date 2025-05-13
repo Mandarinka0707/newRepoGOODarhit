@@ -8,15 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/repository"
-	"backend.com/forum/forum-servise/pkg/logger"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-
 
 type mockPostUsecase struct {
 	mock.Mock
@@ -26,7 +24,6 @@ func (m *mockPostUsecase) CreatePost(ctx context.Context, token, title, content 
 	args := m.Called(ctx, token, title, content)
 	return args.Get(0).(*entity.Post), args.Error(1)
 }
-
 
 func (m *mockPostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error) {
 	args := m.Called(ctx)
@@ -44,10 +41,8 @@ func (m *mockPostUsecase) UpdatePost(ctx context.Context, token string, postID i
 }
 
 func newTestLogger() *logger.Logger {
-	return &logger.Logger{SugaredLogger: nil} 
+	return &logger.Logger{SugaredLogger: nil}
 }
-
-
 
 func TestCreatePost(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -90,7 +85,6 @@ func TestGetPosts(t *testing.T) {
 	r := gin.Default()
 	r.GET("/posts", handler.GetPosts)
 
-	
 	mockPosts := []*entity.Post{
 		{ID: 1, Title: "Test", Content: "Body", AuthorID: 1, CreatedAt: time.Now()},
 	}

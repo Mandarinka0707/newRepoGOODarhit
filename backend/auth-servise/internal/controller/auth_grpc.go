@@ -4,9 +4,9 @@ package controller
 import (
 	"context"
 
-	"backend.com/forum/auth-servise/internal/entity"
-	"backend.com/forum/auth-servise/internal/usecase"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/usecase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

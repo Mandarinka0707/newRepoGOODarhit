@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/repository"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/repository"
 )
 
 type CommentUseCase struct {
@@ -28,13 +28,12 @@ func NewCommentUseCase(
 }
 
 func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Comment) error {
-	
+
 	_, err := uc.postRepo.GetPostByID(ctx, comment.PostID)
 	if err != nil {
 		return err
 	}
 
-	
 	userResp, err := uc.AuthClient.GetUser(ctx, &pb.GetUserRequest{Id: comment.AuthorID})
 	if err != nil || userResp == nil || userResp.User == nil {
 		return errors.New("failed to get user info")
@@ -45,7 +44,7 @@ func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Com
 }
 
 func (uc *CommentUseCase) GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error) {
-	
+
 	_, err := uc.postRepo.GetPostByID(ctx, postID)
 	if err != nil {
 		return nil, err

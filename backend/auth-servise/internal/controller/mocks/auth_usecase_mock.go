@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "backend.com/forum/auth-servise/internal/entity"
-	usecase "backend.com/forum/auth-servise/internal/usecase"
+	entity "github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
+	usecase "github.com/Mandarinka0707/newRepoGOODarhit/internal/usecase"
 	gomock "github.com/golang/mock/gomock"
 )
 

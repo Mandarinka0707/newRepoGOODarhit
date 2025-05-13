@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"backend.com/forum/forum-servise/internal/entity"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -130,7 +130,7 @@ func TestGetPosts(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "title", "content", "author_id", "created_at"})
 				mock.ExpectQuery(`SELECT`).WillReturnRows(rows)
 			},
-			want: []*entity.Post{}, 
+			want: []*entity.Post{},
 		},
 		{
 			name: "Error",

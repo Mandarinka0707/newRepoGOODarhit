@@ -8,15 +8,15 @@ import (
 	"net/http"
 	"time"
 
-	"backend.com/forum/auth-servise/internal/controller"
-	"backend.com/forum/auth-servise/internal/repository"
-	"backend.com/forum/auth-servise/internal/usecase"
-	"backend.com/forum/auth-servise/pkg/auth"
-	"backend.com/forum/auth-servise/pkg/logger"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/controller"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/usecase"
+	"github.com/Mandarinka0707/newRepoGOODarhit/pkg/auth"
+	"github.com/Mandarinka0707/newRepoGOODarhit/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
 
-	_ "backend.com/forum/auth-servise/docs"
 	pb "backend.com/forum/proto"
+	_ "github.com/Mandarinka0707/newRepoGOODarhit/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

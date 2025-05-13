@@ -2,9 +2,10 @@
 package repository
 
 import (
-	"chat-microservice-go/internal/entity"
 	"errors"
 	"testing"
+
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -139,16 +140,6 @@ func TestGetMessages(t *testing.T) {
 		})
 	}
 }
-
-
-
-
-
-
-
-
-
-
 
 // // internal/repository/message_repository_test.go
 // package repository

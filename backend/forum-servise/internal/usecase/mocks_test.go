@@ -3,11 +3,10 @@ package usecase
 import (
 	"context"
 
-	"backend.com/forum/forum-servise/internal/entity"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
 	"google.golang.org/grpc"
 )
-
 
 type MockPostRepository struct {
 	CreatePostFunc  func(ctx context.Context, post *entity.Post) (int64, error)
@@ -51,7 +50,6 @@ func (m *MockPostRepository) UpdatePost(ctx context.Context, postID, authorID in
 	}
 	return nil, nil
 }
-
 
 type MockAuthServiceClient struct {
 	ValidateTokenFunc func(ctx context.Context, in *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error)

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	domain "backend.com/forum/auth-servise/internal/entity"
 	"github.com/DATA-DOG/go-sqlmock"
+	domain "github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )

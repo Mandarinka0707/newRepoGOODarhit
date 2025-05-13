@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"backend.com/forum/auth-servise/internal/entity"
-	"backend.com/forum/auth-servise/internal/repository"
-	"backend.com/forum/auth-servise/pkg/auth"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/pkg/auth"
 	"github.com/dgrijalva/jwt-go"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"

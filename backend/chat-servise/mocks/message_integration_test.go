@@ -2,17 +2,18 @@
 package mocks
 
 import (
-	"chat-microservice-go/internal/entity"
-	"chat-microservice-go/internal/handler"
-	"chat-microservice-go/internal/repository"
-	"chat-microservice-go/internal/usecase"
-	myWeb "chat-microservice-go/pkg/websocket"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/handler"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/usecase"
+	myWeb "github.com/Mandarinka0707/newRepoGOODarhit/chat/pkg/websocket"
 
 	"os"
 	"strings"

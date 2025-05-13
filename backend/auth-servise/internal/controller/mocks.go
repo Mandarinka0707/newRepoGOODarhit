@@ -5,8 +5,8 @@ import (
 	"context"
 	"reflect"
 
-	"backend.com/forum/auth-servise/internal/entity"
-	"backend.com/forum/auth-servise/internal/usecase"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/usecase"
 	"github.com/golang/mock/gomock"
 )
 

@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"backend.com/forum/auth-servise/internal/entity"
-	"backend.com/forum/auth-servise/internal/usecase"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/internal/usecase"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"

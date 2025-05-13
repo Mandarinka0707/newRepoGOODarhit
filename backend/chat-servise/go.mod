@@ -1,4 +1,4 @@
-module chat-microservice-go
+module github.com/Mandarinka0707/newRepoGOODarhit/chat
 
 go 1.24.0
 

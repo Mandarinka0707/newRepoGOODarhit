@@ -1,8 +1,9 @@
 package websocket
 
 import (
-	"chat-microservice-go/internal/entity"
 	"net/http"
+
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
 
 	"github.com/gorilla/websocket"
 )

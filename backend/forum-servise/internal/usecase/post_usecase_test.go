@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/repository"
-	"backend.com/forum/forum-servise/pkg/logger"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"

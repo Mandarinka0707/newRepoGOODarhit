@@ -1,4 +1,4 @@
-module backend.com/forum/auth-servise
+module github.com/Mandarinka0707/newRepoGOODarhit
 
 go 1.24.0
 

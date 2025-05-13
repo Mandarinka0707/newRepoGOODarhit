@@ -2,9 +2,9 @@
 package handler
 
 import (
-	"chat-microservice-go/internal/entity"
-	"chat-microservice-go/internal/usecase"
-	myWeb "chat-microservice-go/pkg/websocket"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/usecase"
+	myWeb "github.com/Mandarinka0707/newRepoGOODarhit/chat/pkg/websocket"
 
 	"log"
 	"net/http"

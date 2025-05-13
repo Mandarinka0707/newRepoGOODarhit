@@ -2,10 +2,11 @@
 package repository
 
 import (
-	"chat-microservice-go/internal/entity"
 	"database/sql"
 	"fmt"
 	"log"
+
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
 )
 
 type MessageRepository interface {

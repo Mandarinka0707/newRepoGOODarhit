@@ -6,10 +6,10 @@ import (
 	"errors"
 	"time"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/repository"
-	"backend.com/forum/forum-servise/pkg/logger"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/pkg/logger"
 )
 
 type PostUsecase struct {
@@ -37,7 +37,7 @@ func NewPostUsecase(
 }
 
 func (uc *PostUsecase) CreatePost(ctx context.Context, token string, title, content string) (*entity.Post, error) {
-	
+
 	validateResp, err := uc.authClient.ValidateToken(ctx, &pb.ValidateTokenRequest{Token: token})
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (uc *PostUsecase) CreatePost(ctx context.Context, token string, title, cont
 	post := &entity.Post{
 		Title:     title,
 		Content:   content,
-		AuthorID:  userID, 
+		AuthorID:  userID,
 		CreatedAt: time.Now(),
 	}
 
@@ -63,7 +63,6 @@ func (uc *PostUsecase) CreatePost(ctx context.Context, token string, title, cont
 	return post, nil
 }
 
-
 func (uc *PostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error) {
 	posts, err := uc.postRepo.GetPosts(ctx)
 	if err != nil {
@@ -72,24 +71,21 @@ func (uc *PostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]st
 
 	authorNames := make(map[int]string)
 
-
 	authorIDs := make([]int64, 0, len(posts))
 	for _, post := range posts {
 		authorIDs = append(authorIDs, post.AuthorID)
 	}
 
-	
 	for _, authorID := range authorIDs {
 		userResponse, err := uc.authClient.GetUser(ctx, &pb.GetUserRequest{
 			Id: authorID,
 		})
 
 		if err == nil && userResponse.User != nil {
-			authorNames[int(authorID)] = userResponse.User.Username 
+			authorNames[int(authorID)] = userResponse.User.Username
 		}
 	}
 
-	
 	for _, post := range posts {
 		if _, exists := authorNames[int(post.AuthorID)]; !exists {
 			authorNames[int(post.AuthorID)] = "Unknown"

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/repository"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
-
 
 type MockCommentRepository struct {
 	CreateCommentFunc       func(ctx context.Context, comment *entity.Comment) error
@@ -105,8 +104,6 @@ func TestCommentUseCase_CreateComment(t *testing.T) {
 		})
 	}
 }
-
-
 
 func TestCommentUseCase_GetCommentsByPostID(t *testing.T) {
 	tests := []struct {

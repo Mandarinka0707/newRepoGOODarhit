@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	domain "backend.com/forum/auth-servise/internal/entity"
+	domain "github.com/Mandarinka0707/newRepoGOODarhit/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 

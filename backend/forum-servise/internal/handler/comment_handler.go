@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"backend.com/forum/forum-servise/internal/entity"
-	"backend.com/forum/forum-servise/internal/usecase"
 	pb "backend.com/forum/proto"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/usecase"
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,7 +44,6 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 	}
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-
 	authResponse, err := h.commentUC.AuthClient.ValidateToken(c.Request.Context(), &pb.ValidateTokenRequest{
 		Token: token,
 	})
@@ -53,13 +52,11 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	
 	postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
 		return
 	}
-
 
 	var request struct {
 		Content string `json:"content" binding:"required"`
@@ -69,31 +66,26 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 		return
 	}
 
-
 	userResponse, err := h.commentUC.AuthClient.GetUser(c.Request.Context(), &pb.GetUserRequest{
 		Id: authResponse.UserId,
 	})
 
-
 	comment := entity.Comment{
 		Content:    request.Content,
 		AuthorID:   authResponse.UserId,
-		AuthorName: "Unknown", 
+		AuthorName: "Unknown",
 		PostID:     postID,
 	}
-
 
 	if err == nil && userResponse != nil && userResponse.User != nil {
 		comment.AuthorName = userResponse.User.Username
 	}
-
 
 	if err := h.commentUC.CreateComment(c.Request.Context(), &comment); err != nil {
 		log.Printf("Error creating comment: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
 		return
 	}
-
 
 	c.JSON(http.StatusCreated, gin.H{
 		"id":          comment.ID,
@@ -123,7 +115,6 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 		return
 	}
 
-
 	comments, err := h.commentUC.GetCommentsByPostID(c.Request.Context(), postID)
 	if err != nil {
 		log.Printf("Error getting comments: %v", err)
@@ -133,7 +124,6 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 		})
 		return
 	}
-
 
 	c.JSON(http.StatusOK, gin.H{
 		"comments": comments,

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"chat-microservice-go/internal/handler"
-	"chat-microservice-go/internal/repository"
-	"chat-microservice-go/internal/usecase"
 	"database/sql"
 	"log"
-	_ "chat-microservice-go/docs" 
+
+	_ "github.com/Mandarinka0707/newRepoGOODarhit/chat/docs"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/handler"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/repository"
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/usecase"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -50,7 +51,6 @@ func main() {
 	r := gin.Default()
 	r.Use(cors.Default())
 
-	
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// WebSocket endpoint

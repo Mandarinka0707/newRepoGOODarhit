@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
-	"backend.com/forum/forum-servise/internal/entity"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Mandarinka0707/newRepoGOODarhit/forum-servise/internal/entity"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -127,7 +127,7 @@ func TestGetCommentsByPostID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "content", "author_id", "post_id", "author_name"})
 				mock.ExpectQuery(`SELECT`).WithArgs(int64(2)).WillReturnRows(rows)
 			},
-			want: []entity.Comment{}, 
+			want: []entity.Comment{},
 		},
 		{
 			name:   "Database Error",

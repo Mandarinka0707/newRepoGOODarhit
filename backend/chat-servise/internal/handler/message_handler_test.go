@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"chat-microservice-go/internal/entity"
-	myWeb "chat-microservice-go/pkg/websocket"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Mandarinka0707/newRepoGOODarhit/chat/internal/entity"
+	myWeb "github.com/Mandarinka0707/newRepoGOODarhit/chat/pkg/websocket"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
