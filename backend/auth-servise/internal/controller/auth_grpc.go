@@ -13,27 +13,22 @@ import (
 )
 
 type AuthController struct {
-	uc *usecase.AuthUsecase
+	uc usecase.AuthUsecaseInterface
 	pb.UnimplementedAuthServiceServer
 }
 
-func NewAuthController(uc *usecase.AuthUsecase) *AuthController {
+func NewAuthController(uc usecase.AuthUsecaseInterface) *AuthController {
 	return &AuthController{uc: uc}
 }
 
-// Register регистрирует пользователя через gRPC
-//
-// @Summary Регистрация пользователя через gRPC
-// @Description Регистрирует нового пользователя, используя gRPC
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Failure 500 {object} entity.ErrorResponse
-// @Router /auth/register [post]
 func (c *AuthController) Register(
 	ctx context.Context,
 	req *pb.RegisterRequest,
 ) (*pb.RegisterResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+	}
+
 	ucReq := &usecase.RegisterRequest{
 		Username: req.Username,
 		Password: req.Password,
@@ -47,19 +42,14 @@ func (c *AuthController) Register(
 	return &pb.RegisterResponse{UserId: ucResp.UserID}, nil
 }
 
-// Login выполняет аутентификацию пользователя через gRPC
-//
-// @Summary Логин пользователя через gRPC
-// @Description Выполняет аутентификацию пользователя, используя gRPC
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Failure 500 {object} entity.ErrorResponse
-// @Router /auth/login [post]
 func (c *AuthController) Login(
 	ctx context.Context,
 	req *pb.LoginRequest,
 ) (*pb.LoginResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+	}
+
 	ucReq := &usecase.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
@@ -72,24 +62,18 @@ func (c *AuthController) Login(
 
 	return &pb.LoginResponse{
 		Token:    ucResp.Token,
-		Username: ucResp.Username, // Добавьте это
+		Username: ucResp.Username,
 	}, nil
 }
 
-// GetUser получает информацию о пользователе через gRPC
-//
-// @Summary Получить информацию о пользователе через gRPC
-// @Description Получает информацию о пользователе по ID
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Failure 500 {object} entity.ErrorResponse
-// @Param id path string true "ID пользователя"
-// @Router /auth/user/{id} [get]
 func (c *AuthController) GetUser(
 	ctx context.Context,
 	req *pb.GetUserRequest,
 ) (*pb.GetUserResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+	}
+
 	ucReq := &usecase.GetUserRequest{UserID: req.Id}
 
 	ucResp, err := c.uc.GetUser(ctx, ucReq)
@@ -102,31 +86,40 @@ func (c *AuthController) GetUser(
 	}, nil
 }
 
+// auth_grpc.go
 func convertUserToProto(user *entity.User) *pb.User {
+	if user == nil {
+		return nil
+	}
+
+	var role string
+	switch user.Role {
+	case entity.RoleAdmin:
+		role = "admin"
+	case entity.RoleUser:
+		role = "user"
+	default:
+		role = string(user.Role) // для любых других значений
+	}
+
 	return &pb.User{
 		Id:        user.ID,
 		Username:  user.Username,
-		Role:      string(user.Role),
+		Role:      role,
 		CreatedAt: timestamppb.New(user.CreatedAt),
 	}
 }
-
-// ValidateToken проверяет валидность токена через gRPC
-//
-// @Summary Проверка валидности токена через gRPC
-// @Description Проверяет валидность токена и возвращает информацию о пользователе
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Failure 500 {object} entity.ErrorResponse
-// @Router /auth/validate-token [post]
 func (c *AuthController) ValidateToken(
 	ctx context.Context,
 	req *pb.ValidateTokenRequest,
 ) (*pb.ValidateTokenResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+	}
+
 	ucReq := &usecase.ValidateTokenRequest{Token: req.Token}
 
-	ucResp, err := c.uc.ValidateToken(ctx, ucReq) // Добавлен контекст
+	ucResp, err := c.uc.ValidateToken(ctx, ucReq)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

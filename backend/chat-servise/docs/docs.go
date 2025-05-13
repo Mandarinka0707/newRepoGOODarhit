@@ -98,8 +98,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is a chat microservice with WebSocket support",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

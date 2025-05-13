@@ -44,7 +44,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 	}
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-	// Аутентификация пользователя
+
 	authResponse, err := h.commentUC.AuthClient.ValidateToken(c.Request.Context(), &pb.ValidateTokenRequest{
 		Token: token,
 	})
@@ -53,14 +53,14 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	// Получение post_id из URL
+	
 	postID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
 		return
 	}
 
-	// Биндинг данных запроса
+
 	var request struct {
 		Content string `json:"content" binding:"required"`
 	}
@@ -69,32 +69,32 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	// Получение информации о пользователе
+
 	userResponse, err := h.commentUC.AuthClient.GetUser(c.Request.Context(), &pb.GetUserRequest{
 		Id: authResponse.UserId,
 	})
 
-	// Создание объекта комментария
+
 	comment := entity.Comment{
 		Content:    request.Content,
 		AuthorID:   authResponse.UserId,
-		AuthorName: "Unknown", // Значение по умолчанию
+		AuthorName: "Unknown", 
 		PostID:     postID,
 	}
 
-	// Обновление имени автора при успешном получении данных
+
 	if err == nil && userResponse != nil && userResponse.User != nil {
 		comment.AuthorName = userResponse.User.Username
 	}
 
-	// Сохранение комментария
+
 	if err := h.commentUC.CreateComment(c.Request.Context(), &comment); err != nil {
 		log.Printf("Error creating comment: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
 		return
 	}
 
-	// Возвращаем полные данные комментария
+
 	c.JSON(http.StatusCreated, gin.H{
 		"id":          comment.ID,
 		"content":     comment.Content,
@@ -123,7 +123,7 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 		return
 	}
 
-	// Получение комментариев
+
 	comments, err := h.commentUC.GetCommentsByPostID(c.Request.Context(), postID)
 	if err != nil {
 		log.Printf("Error getting comments: %v", err)
@@ -134,7 +134,7 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 		return
 	}
 
-	// Правильный формат ответа с массивом комментариев
+
 	c.JSON(http.StatusOK, gin.H{
 		"comments": comments,
 	})

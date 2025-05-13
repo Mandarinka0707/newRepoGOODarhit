@@ -127,7 +127,7 @@ func TestGetCommentsByPostID(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "content", "author_id", "post_id", "author_name"})
 				mock.ExpectQuery(`SELECT`).WithArgs(int64(2)).WillReturnRows(rows)
 			},
-			want: []entity.Comment{}, // Ожидаем пустой слайс
+			want: []entity.Comment{}, 
 		},
 		{
 			name:   "Database Error",

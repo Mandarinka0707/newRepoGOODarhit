@@ -24,9 +24,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/login": {
+        "/api/v1/auth/login": {
             "post": {
-                "description": "Логин по имени пользователя и паролю",
+                "description": "Вход в систему с логином и паролем",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Авторизация пользователя",
+                "summary": "Аутентификация пользователя",
                 "parameters": [
                     {
                         "description": "Данные для входа",
@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/usecase.LoginRequest"
+                            "$ref": "#/definitions/controller.HTTPLoginRequest"
                         }
                     }
                 ],
@@ -71,7 +71,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/register": {
+        "/api/v1/auth/register": {
             "post": {
                 "description": "Регистрирует нового пользователя",
                 "consumes": [
@@ -91,7 +91,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/usecase.RegisterRequest"
+                            "$ref": "#/definitions/controller.HTTPRegisterRequest"
                         }
                     }
                 ],
@@ -118,9 +118,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/user/{id}": {
+        "/api/v1/auth/user/{id}": {
             "get": {
-                "description": "Получает информацию о пользователе по ID через HTTP",
+                "description": "Возвращает информацию о пользователе по ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -130,7 +130,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Получить информацию о пользователе через HTTP",
+                "summary": "Получить данные пользователя",
                 "parameters": [
                     {
                         "type": "string",
@@ -142,7 +142,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Ответ с данными пользователя",
+                        "description": "Данные пользователя",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -154,29 +154,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/validate-token": {
-            "post": {
-                "description": "Проверяет валидность токена и возвращает информацию о пользователе",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Проверка валидности токена через gRPC",
-                "responses": {
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -218,28 +195,6 @@ const docTemplate = `{
                     "example": "invalid request"
                 }
             }
-        },
-        "usecase.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "usecase.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
         }
     },
     "securityDefinitions": {
@@ -258,12 +213,13 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Auth Service API",
 	Description:      "Authentication and authorization service for the forum",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+
 }
 
 func init() {

@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// MockCommentRepository реализует CommentRepository
+
 type MockCommentRepository struct {
 	CreateCommentFunc       func(ctx context.Context, comment *entity.Comment) error
 	GetCommentsByPostIDFunc func(ctx context.Context, postID int64) ([]entity.Comment, error)
@@ -106,7 +106,7 @@ func TestCommentUseCase_CreateComment(t *testing.T) {
 	}
 }
 
-// Остальные тесты (GetCommentsByPostID, DeleteComment) остаются без изменений
+
 
 func TestCommentUseCase_GetCommentsByPostID(t *testing.T) {
 	tests := []struct {

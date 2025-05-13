@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	_ "backend.com/forum/forum-servise/docs"
 	"backend.com/forum/forum-servise/internal/repository"
 	"backend.com/forum/forum-servise/internal/usecase"
 	"backend.com/forum/forum-servise/pkg/logger"
@@ -24,14 +25,14 @@ func NewPostHandler(uc usecase.PostUsecaseInterface, logger *logger.Logger) *Pos
 }
 
 // CreatePost godoc
-// @Summary Create a new post
-// @Description Create a new forum post with title and content
-// @Tags posts
+// @Summary Создать новый пост
+// @Description Создает новый пост в системе
+// @Tags Посты
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
-// @Param Authorization header string true "Bearer token"
-// @Param request body entity.Post true "Post data"
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer токен"
+// @Param request body entity.Post true "Данные поста"
 // @Success 201 {object} entity.Post
 // @Failure 400 {object} entity.ErrorResponse
 // @Failure 401 {object} entity.ErrorResponse
@@ -73,14 +74,15 @@ func (h *PostHandler) CreatePost(ctx *gin.Context) {
 
 // GetPosts godoc
 // @Summary Get all posts
-// @Description Get list of all forum posts with author information
+// @Description Get list of all forum posts with pagination
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Success 200 {array} entity.Post
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Posts per page" default(10)
+// @Success 200 {object} map[string]interface{}
 // @Failure 500 {object} entity.ErrorResponse
 // @Router /api/v1/posts [get]
-
 func (h *PostHandler) GetPosts(c *gin.Context) {
 	posts, authorNames, err := h.uc.GetPosts(c.Request.Context())
 	if err != nil {

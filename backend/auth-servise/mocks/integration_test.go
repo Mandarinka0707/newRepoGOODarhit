@@ -74,7 +74,7 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Create and Get Session", func(t *testing.T) {
-		// Clean up before test
+
 		_, _ = db.Exec("DELETE FROM sessions")
 
 		session := &entity.Session{
@@ -83,11 +83,9 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 			ExpiresAt: time.Now().Add(24 * time.Hour),
 		}
 
-		// Test CreateSession
 		err := repo.CreateSession(ctx, session)
 		assert.NoError(t, err)
 
-		// Test GetSessionByToken
 		retrievedSession, err := repo.GetSessionByToken(ctx, "test-token-1")
 		assert.NoError(t, err)
 		assert.Equal(t, session.UserID, retrievedSession.UserID)
@@ -96,7 +94,7 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existent Session", func(t *testing.T) {
-		// Clean up before test
+
 		_, _ = db.Exec("DELETE FROM sessions")
 
 		_, err := repo.GetSessionByToken(ctx, "non-existent-token")
@@ -105,7 +103,7 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 	})
 
 	t.Run("Create Duplicate Session", func(t *testing.T) {
-		// Clean up before test
+
 		_, _ = db.Exec("DELETE FROM sessions")
 
 		session := &entity.Session{
@@ -114,21 +112,18 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 			ExpiresAt: time.Now().Add(24 * time.Hour),
 		}
 
-		// First insert should succeed
 		err := repo.CreateSession(ctx, session)
 		assert.NoError(t, err)
 
-		// Second insert with same token should fail
 		err = repo.CreateSession(ctx, session)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "duplicate key value violates unique constraint")
 	})
 
 	t.Run("Multiple Sessions for Same User", func(t *testing.T) {
-		// Clean up before test
+
 		_, _ = db.Exec("DELETE FROM sessions")
 
-		// Create first session
 		session1 := &entity.Session{
 			UserID:    1,
 			Token:     "token-1",
@@ -137,7 +132,6 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 		err := repo.CreateSession(ctx, session1)
 		assert.NoError(t, err)
 
-		// Create second session for same user
 		session2 := &entity.Session{
 			UserID:    1,
 			Token:     "token-2",
@@ -146,7 +140,6 @@ func TestSessionRepositoryIntegration(t *testing.T) {
 		err = repo.CreateSession(ctx, session2)
 		assert.NoError(t, err)
 
-		// Verify both sessions exist
 		retrieved1, err := repo.GetSessionByToken(ctx, "token-1")
 		assert.NoError(t, err)
 		assert.Equal(t, session1.UserID, retrieved1.UserID)

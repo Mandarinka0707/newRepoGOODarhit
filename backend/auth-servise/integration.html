@@ -1,0 +1,1395 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">backend.com/forum/auth-servise/cmd/main.go (0.0%)</option>
+				
+				<option value="file1">backend.com/forum/auth-servise/docs/docs.go (0.0%)</option>
+				
+				<option value="file2">backend.com/forum/auth-servise/internal/controller/auth_grpc.go (100.0%)</option>
+				
+				<option value="file3">backend.com/forum/auth-servise/internal/controller/auth_http.go (100.0%)</option>
+				
+				<option value="file4">backend.com/forum/auth-servise/internal/controller/mocks.go (100.0%)</option>
+				
+				<option value="file5">backend.com/forum/auth-servise/internal/controller/mocks/auth_usecase_mock.go (0.0%)</option>
+				
+				<option value="file6">backend.com/forum/auth-servise/internal/repository/session_repository.go (87.5%)</option>
+				
+				<option value="file7">backend.com/forum/auth-servise/internal/repository/user_repository.go (100.0%)</option>
+				
+				<option value="file8">backend.com/forum/auth-servise/internal/usecase/auth_usecase.go (60.8%)</option>
+				
+				<option value="file9">backend.com/forum/auth-servise/pkg/auth/jwt.go (0.0%)</option>
+				
+				<option value="file10">backend.com/forum/auth-servise/pkg/logger/logger.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "flag"
+        "fmt"
+        "log"
+        "net"
+        "net/http"
+        "time"
+
+        "backend.com/forum/auth-servise/internal/controller"
+        "backend.com/forum/auth-servise/internal/repository"
+        "backend.com/forum/auth-servise/internal/usecase"
+        "backend.com/forum/auth-servise/pkg/auth"
+        "backend.com/forum/auth-servise/pkg/logger"
+        "golang.org/x/crypto/bcrypt"
+
+        _ "backend.com/forum/auth-servise/docs"
+        pb "backend.com/forum/proto"
+
+        "github.com/gin-contrib/cors"
+        "github.com/gin-gonic/gin"
+        "github.com/golang-migrate/migrate/v4"
+        _ "github.com/golang-migrate/migrate/v4/database/postgres"
+        _ "github.com/golang-migrate/migrate/v4/source/file"
+        "github.com/jmoiron/sqlx"
+        _ "github.com/lib/pq"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+        "google.golang.org/grpc"
+        "google.golang.org/grpc/reflection"
+)
+
+// @title           Auth Service API
+// @version         1.0
+// @description     Authentication and authorization service for the forum
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+
+// @securityDefinitions.basic  BasicAuth
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+var (
+        grpcPort        = flag.String("grpc-port", ":50051", "gRPC server port")
+        httpPort        = flag.String("http-port", ":8080", "HTTP server port")
+        dbURL           = flag.String("db-url", "postgres://user:password@localhost:5432/database?sslmode=disable", "Database connection URL")
+        migrationsPath  = flag.String("migrations_path", "/Users/darinautalieva/Desktop/GOProject/backend/auth-servise/migrations", "path to migrations files")
+        tokenSecret     = flag.String("token-secret", "secret", "JWT token secret")
+        tokenExpiration = flag.Duration("token-expiration", 24*time.Hour, "JWT token expiration")
+        logLevel        = flag.String("log-level", "info", "Logging level")
+)
+
+func main() <span class="cov0" title="0">{
+        flag.Parse()
+        password := "admin"
+        hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+        <span class="cov0" title="0">fmt.Println("PASSWORD     ")
+        fmt.Println(string(hash))
+
+        logger, err := logger.NewLogger(*logLevel)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to initialize logger: %v", err)
+        }</span>
+        <span class="cov0" title="0">defer logger.Sync()
+
+        db, err := sqlx.Connect("postgres", *dbURL)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Failed to connect to database: %v", err)
+        }</span>
+        <span class="cov0" title="0">defer db.Close()
+
+        if err := runMigrations(*dbURL, *migrationsPath, logger); err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Migrations failed: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">userRepo := repository.NewUserRepository(db)
+        sessionRepo := repository.NewSessionRepository(db)
+
+        authConfig := &amp;auth.Config{
+                TokenSecret:     *tokenSecret,
+                TokenExpiration: *tokenExpiration,
+        }
+
+        authUseCase := usecase.NewAuthUsecase(
+                userRepo,
+                sessionRepo,
+                authConfig,
+                logger.ZapLogger(),
+        )
+
+        grpcController := controller.NewAuthController(authUseCase)
+        httpController := controller.NewHTTPAuthController(authUseCase)
+
+        go startGRPCServer(*grpcPort, grpcController, logger)
+        startHTTPServer(*httpPort, httpController, logger)</span>
+}
+
+func startGRPCServer(port string, controller *controller.AuthController, logger *logger.Logger) <span class="cov0" title="0">{
+        lis, err := net.Listen("tcp", port)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Failed to listen: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">s := grpc.NewServer()
+        pb.RegisterAuthServiceServer(s, controller)
+        reflection.Register(s)
+
+        logger.Info("Starting gRPC server on %s", port)
+        if err := s.Serve(lis); err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Failed to serve gRPC: %v", err)
+        }</span>
+}
+
+// main.go (исправленная часть)
+func startHTTPServer(port string, controller *controller.HTTPAuthController, logger *logger.Logger) <span class="cov0" title="0">{
+        router := gin.Default()
+
+        // Настройка CORS и Swagger
+        router.Use(cors.New(cors.Config{
+                AllowOrigins:     []string{"http://localhost:3000"},
+                AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+                AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+                ExposeHeaders:    []string{"Content-Length"},
+                AllowCredentials: true,
+                MaxAge:           12 * time.Hour,
+        }))
+
+        // Swagger
+        router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+        // Группировка роутов с префиксом /api/v1
+        api := router.Group("/api/v1")
+        </span><span class="cov0" title="0">{
+                authGroup := api.Group("/auth")
+                </span><span class="cov0" title="0">{
+                        authGroup.POST("/register", controller.Register)
+                        authGroup.POST("/login", controller.Login)
+                        authGroup.GET("/user/:id", controller.GetUser)
+                }</span>
+        }
+
+        <span class="cov0" title="0">logger.Info("Starting HTTP server on %s", port)
+        if err := http.ListenAndServe(port, router); err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Failed to start HTTP server: %v", err)
+        }</span>
+}
+func runMigrations(dbURL, migrationsPath string, logger *logger.Logger) error <span class="cov0" title="0">{
+        m, err := migrate.New(
+                "file://"+migrationsPath,
+                dbURL,
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create migrate instance: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer m.Close()
+
+        if err := m.Up(); err != nil &amp;&amp; err != migrate.ErrNoChange </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to run migrations: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Database migrations applied successfully")
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "Вход в систему с логином и паролем",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Аутентификация пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для входа",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.HTTPLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "description": "Регистрирует нового пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Регистрация пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.HTTPRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "user_id",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user/{id}": {
+            "get": {
+                "description": "Возвращает информацию о пользователе по ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Получить данные пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные пользователя",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/entity.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "controller.HTTPLoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.HTTPRegisterRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "invalid request"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &amp;swag.Spec{
+        Version:          "1.0",
+        Host:             "localhost:8080",
+        BasePath:         "",
+        Schemes:          []string{},
+        Title:            "Auth Service API",
+        Description:      "Authentication and authorization service for the forum",
+        InfoInstanceName: "swagger",
+        SwaggerTemplate:  docTemplate,
+
+}
+
+func init() <span class="cov0" title="0">{
+        swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// controller/auth_grpc.go
+package controller
+
+import (
+        "context"
+
+        "backend.com/forum/auth-servise/internal/entity"
+        "backend.com/forum/auth-servise/internal/usecase"
+        pb "backend.com/forum/proto"
+        "google.golang.org/grpc/codes"
+        "google.golang.org/grpc/status"
+        "google.golang.org/protobuf/types/known/timestamppb"
+)
+
+type AuthController struct {
+        uc usecase.AuthUsecaseInterface
+        pb.UnimplementedAuthServiceServer
+}
+
+func NewAuthController(uc usecase.AuthUsecaseInterface) *AuthController <span class="cov8" title="1">{
+        return &amp;AuthController{uc: uc}
+}</span>
+
+func (c *AuthController) Register(
+        ctx context.Context,
+        req *pb.RegisterRequest,
+) (*pb.RegisterResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.RegisterRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := c.uc.Register(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.RegisterResponse{UserId: ucResp.UserID}, nil</span>
+}
+
+func (c *AuthController) Login(
+        ctx context.Context,
+        req *pb.LoginRequest,
+) (*pb.LoginResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.LoginRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := c.uc.Login(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.LoginResponse{
+                Token:    ucResp.Token,
+                Username: ucResp.Username,
+        }, nil</span>
+}
+
+func (c *AuthController) GetUser(
+        ctx context.Context,
+        req *pb.GetUserRequest,
+) (*pb.GetUserResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.GetUserRequest{UserID: req.Id}
+
+        ucResp, err := c.uc.GetUser(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.GetUserResponse{
+                User: convertUserToProto(ucResp.User),
+        }, nil</span>
+}
+
+// auth_grpc.go
+func convertUserToProto(user *entity.User) *pb.User <span class="cov8" title="1">{
+        if user == nil </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">var role string
+        switch user.Role </span>{
+        case entity.RoleAdmin:<span class="cov8" title="1">
+                role = "admin"</span>
+        case entity.RoleUser:<span class="cov8" title="1">
+                role = "user"</span>
+        default:<span class="cov8" title="1">
+                role = string(user.Role)</span> // для любых других значений
+        }
+
+        <span class="cov8" title="1">return &amp;pb.User{
+                Id:        user.ID,
+                Username:  user.Username,
+                Role:      role,
+                CreatedAt: timestamppb.New(user.CreatedAt),
+        }</span>
+}
+func (c *AuthController) ValidateToken(
+        ctx context.Context,
+        req *pb.ValidateTokenRequest,
+) (*pb.ValidateTokenResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.ValidateTokenRequest{Token: req.Token}
+
+        ucResp, err := c.uc.ValidateToken(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.ValidateTokenResponse{
+                Valid:  ucResp.Valid,
+                UserId: ucResp.UserID,
+                Role:   ucResp.Role,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// controller/auth_http.go
+package controller
+
+import (
+        "net/http"
+        "strconv"
+
+        "backend.com/forum/auth-servise/internal/usecase"
+        "github.com/gin-gonic/gin"
+)
+
+type HTTPAuthController struct {
+        uc usecase.AuthUsecaseInterface
+}
+
+func NewHTTPAuthController(uc usecase.AuthUsecaseInterface) *HTTPAuthController <span class="cov8" title="1">{
+        return &amp;HTTPAuthController{uc: uc}
+}</span>
+
+type HTTPRegisterRequest struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+}
+
+type HTTPLoginRequest struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+}
+
+// Register регистрирует пользователя через HTTP
+// @Summary Регистрация пользователя
+// @Description Регистрирует нового пользователя
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPRegisterRequest true "Данные для регистрации"
+// @Success 200 {object} map[string]interface{} "user_id"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/register [post]
+func (ctrl *HTTPAuthController) Register(c *gin.Context) <span class="cov8" title="1">{
+        var req HTTPRegisterRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.RegisterRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := ctrl.uc.Register(c.Request.Context(), ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "user_id": ucResp.UserID,
+        })</span>
+}
+
+// Login выполняет аутентификацию пользователя
+// @Summary Аутентификация пользователя
+// @Description Вход в систему с логином и паролем
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPLoginRequest true "Данные для входа"
+// @Success 200 {object} map[string]interface{} "token"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/login [post]
+func (ctrl *HTTPAuthController) Login(c *gin.Context) <span class="cov8" title="1">{
+        var req HTTPLoginRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.LoginRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := ctrl.uc.Login(c.Request.Context(), ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "token":    ucResp.Token,
+                "username": ucResp.Username,
+        })</span>
+}
+
+// GetUser получает информацию о пользователе
+// @Summary Получить данные пользователя
+// @Description Возвращает информацию о пользователе по ID
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param id path string true "ID пользователя"
+// @Success 200 {object} map[string]interface{} "Данные пользователя"
+// @Failure 404 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/user/{id} [get]
+func (ctrl *HTTPAuthController) GetUser(ctx *gin.Context) <span class="cov8" title="1">{
+        userIDStr := ctx.Param("id")
+        userID, err := strconv.ParseInt(userIDStr, 10, 64)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">user, err := ctrl.uc.GetUserByID(ctx.Request.Context(), userID)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ctx.JSON(http.StatusOK, gin.H{
+                "id":       user.ID,
+                "username": user.Username,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// controller/mocks_test.go
+package controller
+
+import (
+        "context"
+        "reflect"
+
+        "backend.com/forum/auth-servise/internal/entity"
+        "backend.com/forum/auth-servise/internal/usecase"
+        "github.com/golang/mock/gomock"
+)
+
+// gomock implementation for gRPC tests
+type MockAuthUsecase struct {
+        ctrl     *gomock.Controller
+        recorder *MockAuthUsecaseRecorder
+}
+
+var _ usecase.AuthUsecaseInterface = (*MockAuthUsecase)(nil)
+
+type MockAuthUsecaseRecorder struct {
+        mock *MockAuthUsecase
+}
+
+func NewMockAuthUsecase(ctrl *gomock.Controller) *MockAuthUsecase <span class="cov8" title="1">{
+        mock := &amp;MockAuthUsecase{ctrl: ctrl}
+        mock.recorder = &amp;MockAuthUsecaseRecorder{mock}
+        return mock
+}</span>
+
+func (m *MockAuthUsecase) EXPECT() *MockAuthUsecaseRecorder <span class="cov8" title="1">{
+        return m.recorder
+}</span>
+
+func (m *MockAuthUsecase) Register(ctx context.Context, req *usecase.RegisterRequest) (*usecase.RegisterResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "Register", ctx, req)
+        ret0, _ := ret[0].(*usecase.RegisterResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) Login(ctx context.Context, req *usecase.LoginRequest) (*usecase.LoginResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "Login", ctx, req)
+        ret0, _ := ret[0].(*usecase.LoginResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) GetUser(ctx context.Context, req *usecase.GetUserRequest) (*usecase.GetUserResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "GetUser", ctx, req)
+        ret0, _ := ret[0].(*usecase.GetUserResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) ValidateToken(ctx context.Context, req *usecase.ValidateTokenRequest) (*usecase.ValidateTokenResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "ValidateToken", ctx, req)
+        ret0, _ := ret[0].(*usecase.ValidateTokenResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) GetUserByID(ctx context.Context, userID int64) (*entity.User, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+        ret0, _ := ret[0].(*entity.User)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) Register(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "Register",
+                reflect.TypeOf((*MockAuthUsecase)(nil).Register),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) Login(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "Login",
+                reflect.TypeOf((*MockAuthUsecase)(nil).Login),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) GetUser(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "GetUser",
+                reflect.TypeOf((*MockAuthUsecase)(nil).GetUser),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) ValidateToken(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "ValidateToken",
+                reflect.TypeOf((*MockAuthUsecase)(nil).ValidateToken),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "GetUserByID",
+                reflect.TypeOf((*MockAuthUsecase)(nil).GetUserByID),
+                ctx,
+                userID,
+        )
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Code generated by MockGen. DO NOT EDIT.
+// Source: internal/usecase/auth_usecase.go
+
+// Package controller is a generated GoMock package.
+package controller
+
+import (
+        context "context"
+        reflect "reflect"
+
+        entity "backend.com/forum/auth-servise/internal/entity"
+        usecase "backend.com/forum/auth-servise/internal/usecase"
+        gomock "github.com/golang/mock/gomock"
+)
+
+// MockAuthUsecaseInterface is a mock of AuthUsecaseInterface interface.
+type MockAuthUsecaseInterface struct {
+        ctrl     *gomock.Controller
+        recorder *MockAuthUsecaseInterfaceMockRecorder
+}
+
+// MockAuthUsecaseInterfaceMockRecorder is the mock recorder for MockAuthUsecaseInterface.
+type MockAuthUsecaseInterfaceMockRecorder struct {
+        mock *MockAuthUsecaseInterface
+}
+
+// NewMockAuthUsecaseInterface creates a new mock instance.
+func NewMockAuthUsecaseInterface(ctrl *gomock.Controller) *MockAuthUsecaseInterface <span class="cov0" title="0">{
+        mock := &amp;MockAuthUsecaseInterface{ctrl: ctrl}
+        mock.recorder = &amp;MockAuthUsecaseInterfaceMockRecorder{mock}
+        return mock
+}</span>
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockAuthUsecaseInterface) EXPECT() *MockAuthUsecaseInterfaceMockRecorder <span class="cov0" title="0">{
+        return m.recorder
+}</span>
+
+// GetUser mocks base method.
+func (m *MockAuthUsecaseInterface) GetUser(ctx context.Context, req *usecase.GetUserRequest) (*usecase.GetUserResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "GetUser", ctx, req)
+        ret0, _ := ret[0].(*usecase.GetUserResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// GetUser indicates an expected call of GetUser.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) GetUser(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).GetUser), ctx, req)
+}</span>
+
+// GetUserByID mocks base method.
+func (m *MockAuthUsecaseInterface) GetUserByID(ctx context.Context, userID string) (*entity.User, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+        ret0, _ := ret[0].(*entity.User)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).GetUserByID), ctx, userID)
+}</span>
+
+// Login mocks base method.
+func (m *MockAuthUsecaseInterface) Login(ctx context.Context, req *usecase.LoginRequest) (*usecase.LoginResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "Login", ctx, req)
+        ret0, _ := ret[0].(*usecase.LoginResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// Login indicates an expected call of Login.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) Login(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).Login), ctx, req)
+}</span>
+
+// Register mocks base method.
+func (m *MockAuthUsecaseInterface) Register(ctx context.Context, req *usecase.RegisterRequest) (*usecase.RegisterResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "Register", ctx, req)
+        ret0, _ := ret[0].(*usecase.RegisterResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// Register indicates an expected call of Register.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) Register(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).Register), ctx, req)
+}</span>
+
+// ValidateToken mocks base method.
+func (m *MockAuthUsecaseInterface) ValidateToken(ctx context.Context, req *usecase.ValidateTokenRequest) (*usecase.ValidateTokenResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "ValidateToken", ctx, req)
+        ret0, _ := ret[0].(*usecase.ValidateTokenResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// ValidateToken indicates an expected call of ValidateToken.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) ValidateToken(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).ValidateToken), ctx, req)
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package repository
+
+import (
+        "context"
+
+        domain "backend.com/forum/auth-servise/internal/entity"
+        "github.com/jmoiron/sqlx"
+)
+
+type SessionRepository interface {
+        CreateSession(ctx context.Context, session *domain.Session) error
+        GetSessionByToken(ctx context.Context, token string) (*domain.Session, error)
+}
+
+type sessionRepository struct {
+        db *sqlx.DB
+}
+
+func NewSessionRepository(db *sqlx.DB) SessionRepository <span class="cov0" title="0">{
+        return &amp;sessionRepository{db: db}
+}</span>
+
+func (r *sessionRepository) CreateSession(ctx context.Context, session *domain.Session) error <span class="cov8" title="1">{
+        query := `INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)`
+        _, err := r.db.ExecContext(ctx, query, session.UserID, session.Token, session.ExpiresAt)
+        return err
+}</span>
+
+func (r *sessionRepository) GetSessionByToken(ctx context.Context, token string) (*domain.Session, error) <span class="cov8" title="1">{
+        query := `SELECT user_id, token, expires_at FROM sessions WHERE token = $1`
+        session := &amp;domain.Session{}
+        err := r.db.GetContext(ctx, session, query, token)
+        return session, err
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package repository
+
+import (
+        "context"
+        "database/sql"
+        "errors"
+
+        domain "backend.com/forum/auth-servise/internal/entity"
+        "github.com/jmoiron/sqlx"
+)
+
+type UserRepository interface {
+        CreateUser(ctx context.Context, user *domain.User) (int64, error)
+        GetUserByUsername(ctx context.Context, username string) (*domain.User, error)
+        GetUserByID(ctx context.Context, id int64) (*domain.User, error) // Добавьте этот метод
+}
+
+type userRepository struct {
+        db *sqlx.DB
+}
+
+func NewUserRepository(db *sqlx.DB) UserRepository <span class="cov8" title="1">{
+        return &amp;userRepository{db: db}
+}</span>
+
+func (r *userRepository) CreateUser(ctx context.Context, user *domain.User) (int64, error) <span class="cov8" title="1">{
+        query := `INSERT INTO users (username, password, role, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
+        var id int64
+        err := r.db.QueryRowContext(ctx, query, user.Username, user.Password, user.Role, user.CreatedAt).Scan(&amp;id)
+        if err != nil </span><span class="cov8" title="1">{
+                return 0, err
+        }</span>
+        <span class="cov8" title="1">return id, nil</span>
+}
+
+func (r *userRepository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) <span class="cov8" title="1">{
+        query := `SELECT id, username, password, role, created_at FROM users WHERE username = $1`
+        user := &amp;domain.User{}
+        err := r.db.GetContext(ctx, user, query, username)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov8" title="1">{
+                        return nil, sql.ErrNoRows
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return user, nil</span>
+}
+func (r *userRepository) GetUserByID(ctx context.Context, id int64) (*domain.User, error) <span class="cov8" title="1">{
+        query := `SELECT id, username, password, role, created_at FROM users WHERE id = $1`
+        user := &amp;domain.User{}
+        err := r.db.GetContext(ctx, user, query, id)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, sql.ErrNoRows) </span><span class="cov8" title="1">{
+                        return nil, nil
+                }</span>
+                <span class="cov8" title="1">return nil, err</span>
+        }
+        <span class="cov8" title="1">return user, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// auth_usecase.go
+package usecase
+
+import (
+        "context"
+        "fmt"
+        "time"
+
+        "backend.com/forum/auth-servise/internal/entity"
+        "backend.com/forum/auth-servise/internal/repository"
+        "backend.com/forum/auth-servise/pkg/auth"
+        "github.com/dgrijalva/jwt-go"
+        "go.uber.org/zap"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type AuthUsecase struct {
+        userRepo    repository.UserRepository
+        sessionRepo repository.SessionRepository
+        cfg         *auth.Config
+        logger      *zap.Logger
+}
+
+type AuthUsecaseInterface interface {
+        Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error)
+        Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
+        GetUserByID(ctx context.Context, userID int64) (*entity.User, error)
+        ValidateToken(ctx context.Context, req *ValidateTokenRequest) (*ValidateTokenResponse, error)
+        GetUser(ctx context.Context, req *GetUserRequest) (*GetUserResponse, error)
+}
+
+func NewAuthUsecase(
+        userRepo repository.UserRepository,
+        sessionRepo repository.SessionRepository,
+        cfg *auth.Config,
+        logger *zap.Logger,
+) *AuthUsecase <span class="cov8" title="1">{
+        return &amp;AuthUsecase{
+                userRepo:    userRepo,
+                sessionRepo: sessionRepo,
+                cfg:         cfg,
+                logger:      logger,
+        }
+}</span>
+
+func (uc *AuthUsecase) Register(
+        ctx context.Context,
+        req *RegisterRequest,
+) (*RegisterResponse, error) <span class="cov8" title="1">{
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov8" title="1">{
+                uc.logger.Error("Failed to hash password", zap.Error(err))
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">user := &amp;entity.User{
+                Username:  req.Username,
+                Password:  string(hashedPassword),
+                Role:      entity.RoleUser,
+                CreatedAt: time.Now(),
+        }
+
+        userID, err := uc.userRepo.CreateUser(ctx, user)
+        if err != nil </span><span class="cov8" title="1">{
+                uc.logger.Error("Failed to create user", zap.Error(err))
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;RegisterResponse{UserID: userID}, nil</span>
+}
+
+func (uc *AuthUsecase) Login(
+        ctx context.Context,
+        req *LoginRequest,
+) (*LoginResponse, error) <span class="cov8" title="1">{
+        user, err := uc.userRepo.GetUserByUsername(ctx, req.Username)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("invalid username or password")
+        }</span>
+
+        <span class="cov8" title="1">err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("invalid username or password")
+        }</span>
+
+        <span class="cov8" title="1">token, err := auth.GenerateToken(
+                user.ID,
+                user.Role,
+                user.Username,
+                uc.cfg.TokenSecret,
+                uc.cfg.TokenExpiration,
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                uc.logger.Error("failed to generate token", zap.Error(err))
+                return nil, fmt.Errorf("internal server error")
+        }</span>
+
+        <span class="cov8" title="1">session := &amp;entity.Session{
+                UserID:    user.ID,
+                Token:     token,
+                ExpiresAt: time.Now().Add(uc.cfg.TokenExpiration),
+        }
+
+        if err := uc.sessionRepo.CreateSession(ctx, session); err != nil </span><span class="cov8" title="1">{
+                uc.logger.Error("failed to create session", zap.Error(err))
+                return nil, fmt.Errorf("internal server error")
+        }</span>
+
+        <span class="cov8" title="1">return &amp;LoginResponse{
+                Token:    token,
+                Username: user.Username,
+        }, nil</span>
+}
+
+func (uc *AuthUsecase) GetUserByID(
+        ctx context.Context,
+        userID int64,
+) (*entity.User, error) <span class="cov8" title="1">{
+        return uc.userRepo.GetUserByID(ctx, userID)
+}</span>
+
+func (uc *AuthUsecase) ValidateToken(
+        ctx context.Context,
+        req *ValidateTokenRequest,
+) (*ValidateTokenResponse, error) <span class="cov0" title="0">{
+        uc.logger.Info("Token validation request")
+
+        token, err := auth.ParseToken(req.Token, uc.cfg.TokenSecret)
+        if err != nil || !token.Valid </span><span class="cov0" title="0">{
+                uc.logger.Warn("Invalid token", zap.Error(err))
+                return &amp;ValidateTokenResponse{Valid: false}, nil
+        }</span>
+
+        <span class="cov0" title="0">claims, ok := token.Claims.(jwt.MapClaims)
+        if !ok </span><span class="cov0" title="0">{
+                uc.logger.Warn("Invalid token claims")
+                return &amp;ValidateTokenResponse{Valid: false}, nil
+        }</span>
+
+        <span class="cov0" title="0">userID, ok := claims["user_id"].(float64)
+        if !ok </span><span class="cov0" title="0">{
+                uc.logger.Warn("Invalid user_id in token")
+                return &amp;ValidateTokenResponse{Valid: false}, nil
+        }</span>
+
+        <span class="cov0" title="0">role, ok := claims["role"].(string)
+        if !ok </span><span class="cov0" title="0">{
+                uc.logger.Warn("Invalid role in token")
+                return &amp;ValidateTokenResponse{Valid: false}, nil
+        }</span>
+
+        <span class="cov0" title="0">return &amp;ValidateTokenResponse{
+                Valid:  true,
+                UserID: int64(userID),
+                Role:   role,
+        }, nil</span>
+}
+
+func (uc *AuthUsecase) GetUser(
+        ctx context.Context,
+        req *GetUserRequest,
+) (*GetUserResponse, error) <span class="cov8" title="1">{
+        uc.logger.Info("Get user request", zap.Int64("user_id", req.UserID))
+
+        user, err := uc.userRepo.GetUserByID(ctx, req.UserID)
+        if err != nil || user == nil </span><span class="cov8" title="1">{
+                uc.logger.Error("User not found", zap.Error(err))
+                return nil, fmt.Errorf("user not found")
+        }</span>
+
+        <span class="cov8" title="1">return &amp;GetUserResponse{User: user}, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package auth
+
+import (
+        "errors"
+        "time"
+
+        "github.com/dgrijalva/jwt-go"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type Config struct {
+        TokenSecret     string
+        TokenExpiration time.Duration
+}
+
+func GenerateToken(userID int64, role string, username string, secret string, expiration time.Duration) (string, error) <span class="cov0" title="0">{
+        claims := jwt.MapClaims{
+                "user_id":  userID,
+                "role":     role,
+                "username": username,
+                "exp":      time.Now().Add(expiration).Unix(),
+        }
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        return token.SignedString([]byte(secret))
+}</span>
+
+func ParseToken(tokenString string, secret string) (*jwt.Token, error) <span class="cov0" title="0">{
+        token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) </span><span class="cov0" title="0">{
+                if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                        return nil, errors.New("invalid signing method")
+                }</span>
+                <span class="cov0" title="0">return []byte(secret), nil</span>
+        })
+        <span class="cov0" title="0">return token, err</span>
+}
+func HashPassword(password string) (string, error) <span class="cov0" title="0">{
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">return string(hashedPassword), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package logger
+
+import (
+        "go.uber.org/zap"
+        "go.uber.org/zap/zapcore"
+)
+
+type Logger struct {
+        *zap.SugaredLogger
+}
+
+func NewLogger(level string) (*Logger, error) <span class="cov0" title="0">{
+        cfg := zap.Config{
+                Encoding:         "console",
+                Level:            zap.NewAtomicLevel(),
+                OutputPaths:      []string{"stdout"},
+                ErrorOutputPaths: []string{"stderr"},
+                EncoderConfig:    zap.NewProductionEncoderConfig(),
+        }
+
+        cfg.EncoderConfig.MessageKey = "message"
+        cfg.EncoderConfig.LevelKey = "level"
+        cfg.EncoderConfig.TimeKey = "time"
+        cfg.EncoderConfig.NameKey = "logger"
+        cfg.EncoderConfig.CallerKey = "caller"
+        cfg.EncoderConfig.StacktraceKey = "stacktrace"
+        cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+        cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+        cfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+        cfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+
+        switch level </span>{
+        case "debug":<span class="cov0" title="0">
+                cfg.Level.SetLevel(zap.DebugLevel)</span>
+        case "info":<span class="cov0" title="0">
+                cfg.Level.SetLevel(zap.InfoLevel)</span>
+        case "warn":<span class="cov0" title="0">
+                cfg.Level.SetLevel(zap.WarnLevel)</span>
+        case "error":<span class="cov0" title="0">
+                cfg.Level.SetLevel(zap.ErrorLevel)</span>
+        default:<span class="cov0" title="0">
+                cfg.Level.SetLevel(zap.InfoLevel)</span>
+        }
+
+        <span class="cov0" title="0">zapLogger, err := cfg.Build()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;Logger{zapLogger.Sugar()}, nil</span>
+}
+func (l *Logger) ZapLogger() *zap.Logger <span class="cov0" title="0">{
+        return l.SugaredLogger.Desugar()
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

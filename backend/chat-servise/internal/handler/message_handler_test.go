@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Mock для MessageUseCase
 type MockMessageUseCase struct {
 	mock.Mock
 }
@@ -31,31 +30,24 @@ func (m *MockMessageUseCase) GetMessages() ([]entity.Message, error) {
 }
 
 func TestMessageHandler_GetMessages(t *testing.T) {
-	// Создаем мок usecase
+
 	uc := new(MockMessageUseCase)
 
-	// Устанавливаем ожидания для моков
 	uc.On("GetMessages").Return([]entity.Message{
 		{ID: 1, Username: "testuser", Message: "Hello, World!"},
 	}, nil)
 
-	// Создаем MessageHandler
 	handler := NewMessageHandler(uc)
 
-	// Создаем Gin router
 	router := gin.Default()
 	router.GET("/messages", handler.GetMessages)
 
-	// Создаем запрос
 	req, _ := http.NewRequest("GET", "/messages", nil)
 
-	// Создаем ResponseRecorder
 	w := httptest.NewRecorder()
 
-	// Обрабатываем запрос
 	router.ServeHTTP(w, req)
 
-	// Проверяем ответ
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp []entity.Message
 	json.Unmarshal(w.Body.Bytes(), &resp)
@@ -66,35 +58,28 @@ func TestMessageHandler_GetMessages(t *testing.T) {
 }
 
 func TestMessageHandler_HandleConnections(t *testing.T) {
-	// Создаем мок usecase
+
 	uc := new(MockMessageUseCase)
 
-	// Устанавливаем ожидания для моков
 	uc.On("SaveMessage", mock.Anything).Return(nil)
 
-	// Создаем MessageHandler
 	handler := NewMessageHandler(uc)
 
-	// Создаем Gin router
 	router := gin.Default()
 	router.GET("/ws", handler.HandleConnections)
 
-	// Создаем сервер для тестирования WebSocket
 	server := httptest.NewServer(router)
 	defer server.Close()
 
-	// Создаем WebSocket клиент
 	url := "ws" + server.URL[4:] + "/ws"
 	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
 	assert.NoError(t, err)
 	defer ws.Close()
 
-	// Отправляем сообщение через WebSocket
 	msg := entity.Message{Username: "testuser", Message: "Hello, World!"}
 	err = ws.WriteJSON(msg)
 	assert.NoError(t, err)
 
-	// Проверяем, что сообщение было сохранено
 	uc.AssertExpectations(t)
 }
 

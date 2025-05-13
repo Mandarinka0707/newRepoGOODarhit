@@ -2,7 +2,7 @@
 package entity
 
 type Message struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Message  string `json:"message"`
+	ID       int    `json:"id" example:"1"`
+	Username string `json:"username" example:"john_doe"`
+	Message  string `json:"message" example:"Hello, world!"`
 }

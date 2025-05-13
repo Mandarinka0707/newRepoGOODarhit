@@ -27,12 +27,12 @@ func TestMessageUseCase_SaveMessage(t *testing.T) {
 	mockRepo := new(MockMessageRepository)
 	uc := NewMessageUseCase(mockRepo)
 
-	// Тест успешного сохранения
+	
 	mockRepo.On("SaveMessage", entity.Message{Username: "test", Message: "hello"}).Return(nil)
 	err := uc.SaveMessage(entity.Message{Username: "test", Message: "hello"})
 	assert.NoError(t, err)
 
-	// Тест ошибки базы данных
+	
 	mockRepo.On("SaveMessage", entity.Message{Username: "error", Message: "fail"}).Return(errors.New("db error"))
 	err = uc.SaveMessage(entity.Message{Username: "error", Message: "fail"})
 	assert.Error(t, err)
@@ -42,19 +42,21 @@ func TestMessageUseCase_GetMessages(t *testing.T) {
 	mockRepo := new(MockMessageRepository)
 	uc := NewMessageUseCase(mockRepo)
 
-	// Тест успешного получения
+	
 	expected := []entity.Message{{ID: 1, Username: "user", Message: "test"}}
 	mockRepo.On("GetMessages").Return(expected, nil)
 	result, err := uc.GetMessages()
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 
-	// Тест пустого результата
+	
 	mockRepo.On("GetMessages").Return([]entity.Message{}, nil)
 	result, err = uc.GetMessages()
 	assert.NoError(t, err)
 	assert.Empty(t, result)
 }
+
+
 
 // func TestMessageUseCase_SaveMessage(t *testing.T) {
 // 	tests := []struct {

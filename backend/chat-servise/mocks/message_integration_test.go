@@ -63,7 +63,6 @@ func (suite *MessageIntegrationTestSuite) SetupSuite() {
 		suite.T().Fatalf("Failed to ping test database: %v", err)
 	}
 
-	// Упрощенная структура таблицы без user_id
 	_, err = suite.db.Exec(`
         CREATE TABLE IF NOT EXISTS chat_messages (
             id SERIAL PRIMARY KEY,
@@ -105,8 +104,6 @@ func TestMessageIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(MessageIntegrationTestSuite))
 }
 
-// internal/mocks/message_integration_test.go
-
 func (suite *MessageIntegrationTestSuite) TestSaveMessage() {
 	tests := []struct {
 		name        string
@@ -133,7 +130,7 @@ func (suite *MessageIntegrationTestSuite) TestSaveMessage() {
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			// Явная очистка таблицы перед каждым подтестом
+
 			_, err := suite.db.Exec("DELETE FROM chat_messages")
 			assert.NoError(suite.T(), err)
 
@@ -144,7 +141,6 @@ func (suite *MessageIntegrationTestSuite) TestSaveMessage() {
 				assert.NoError(suite.T(), err)
 			}
 
-			// Проверка сохраненных данных
 			messages, err := suite.repo.GetMessages()
 			assert.NoError(suite.T(), err)
 			assert.Len(suite.T(), messages, 1, "Должно быть ровно одно сообщение в базе")
@@ -154,7 +150,7 @@ func (suite *MessageIntegrationTestSuite) TestSaveMessage() {
 	}
 }
 func (suite *MessageIntegrationTestSuite) TestGetMessages() {
-	// Setup test data
+
 	messagesToSave := []entity.Message{
 		{Username: "user1", Message: "Message 1"},
 		{Username: "user2", Message: "Message 2"},
@@ -165,7 +161,6 @@ func (suite *MessageIntegrationTestSuite) TestGetMessages() {
 		assert.NoError(suite.T(), err)
 	}
 
-	// Test getting messages
 	messages, err := suite.messageUC.GetMessages()
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), messages, len(messagesToSave))
@@ -178,17 +173,15 @@ func (suite *MessageIntegrationTestSuite) TestGetMessages() {
 }
 
 func (suite *MessageIntegrationTestSuite) TestMessageFlow() {
-	// Test complete flow: save -> get
+
 	testMsg := entity.Message{
 		Username: "testuser",
 		Message:  "Integration test message",
 	}
 
-	// Save message
 	err := suite.messageUC.SaveMessage(testMsg)
 	assert.NoError(suite.T(), err)
 
-	// Get messages
 	messages, err := suite.messageUC.GetMessages()
 	assert.NoError(suite.T(), err)
 	assert.Len(suite.T(), messages, 1)
@@ -213,8 +206,8 @@ func TestGetMessages_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("scan error", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "username"}). // missing content
-									AddRow(1, "user1")
+		rows := sqlmock.NewRows([]string{"id", "username"}).
+			AddRow(1, "user1")
 		mock.ExpectQuery("SELECT id, username, content FROM chat_messages").
 			WillReturnRows(rows)
 
@@ -223,12 +216,8 @@ func TestGetMessages_EdgeCases(t *testing.T) {
 	})
 }
 
-// internal/mocks/message_integration_test.go
-
-// Add these test cases to your existing test file
-
 func TestMessageHandler(t *testing.T) {
-	// Setup mock dependencies
+
 	mockUC := &mockMessageUseCase{
 		saveFunc: func(msg entity.Message) error {
 			return nil
@@ -241,10 +230,9 @@ func TestMessageHandler(t *testing.T) {
 		},
 	}
 
-	// Create handler instance
 	h := &handler.MessageHandler{
 		Uc: mockUC,
-	} // Add handler package prefix
+	}
 
 	t.Run("GetMessages success", func(t *testing.T) {
 		router := gin.Default()
@@ -269,7 +257,7 @@ func TestMessageHandler(t *testing.T) {
 			},
 		}
 
-		errorHandler := handler.NewMessageHandler(errorUC) // Add handler package prefix
+		errorHandler := handler.NewMessageHandler(errorUC)
 
 		router := gin.Default()
 		router.GET("/messages", errorHandler.GetMessages)
@@ -282,42 +270,36 @@ func TestMessageHandler(t *testing.T) {
 	})
 
 	t.Run("HandleConnections websocket upgrade", func(t *testing.T) {
-		// Reset clients before test
-		myWeb.Clients = make(map[*websocket.Conn]bool) // Initialize Clients map
 
-		// Create test server with the handler
+		myWeb.Clients = make(map[*websocket.Conn]bool)
+
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Convert to gin context
+
 			c, _ := gin.CreateTestContext(w)
 			c.Request = r
 			h.HandleConnections(c)
 		}))
 		defer s.Close()
 
-		// Create websocket connection
 		u := "ws" + strings.TrimPrefix(s.URL, "http")
 		ws, _, err := websocket.DefaultDialer.Dial(u+"/ws", nil)
 		require.NoError(t, err)
 		defer ws.Close()
 
-		// Test that client was added
 		assert.Equal(t, 1, len(myWeb.Clients))
 
-		// Send test message
 		testMsg := entity.Message{Username: "test", Message: "hello"}
 		err = ws.WriteJSON(testMsg)
 		require.NoError(t, err)
 
-		// Verify message was saved
 		assert.Equal(t, 1, mockUC.saveCount)
 	})
 
 	t.Run("HandleMessages broadcast", func(t *testing.T) {
-		// Reset clients and broadcast channel before test
+
 		myWeb.Clients = make(map[*websocket.Conn]bool)
 		myWeb.Broadcast = make(chan entity.Message)
 
-		// Create test server
 		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c, _ := gin.CreateTestContext(w)
 			c.Request = r
@@ -325,7 +307,6 @@ func TestMessageHandler(t *testing.T) {
 		}))
 		defer s.Close()
 
-		// Create two clients
 		u := "ws" + strings.TrimPrefix(s.URL, "http")
 		ws1, _, err := websocket.DefaultDialer.Dial(u+"/ws", nil)
 		require.NoError(t, err)
@@ -335,14 +316,11 @@ func TestMessageHandler(t *testing.T) {
 		require.NoError(t, err)
 		defer ws2.Close()
 
-		// Start message handler in separate goroutine
 		go h.HandleMessages()
 
-		// Send broadcast message
 		broadcastMsg := entity.Message{Username: "system", Message: "broadcast"}
 		myWeb.Broadcast <- broadcastMsg
 
-		// Verify both clients received the message
 		var msg1, msg2 entity.Message
 		err = ws1.ReadJSON(&msg1)
 		require.NoError(t, err)
@@ -354,7 +332,6 @@ func TestMessageHandler(t *testing.T) {
 	})
 }
 
-// Mock implementation for MessageUseCase
 type mockMessageUseCase struct {
 	usecase.MessageUseCase
 	saveFunc        func(entity.Message) error

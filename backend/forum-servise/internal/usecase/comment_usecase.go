@@ -28,13 +28,13 @@ func NewCommentUseCase(
 }
 
 func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Comment) error {
-	// Проверяем существование поста
+	
 	_, err := uc.postRepo.GetPostByID(ctx, comment.PostID)
 	if err != nil {
 		return err
 	}
 
-	// Получаем информацию о пользователе
+	
 	userResp, err := uc.AuthClient.GetUser(ctx, &pb.GetUserRequest{Id: comment.AuthorID})
 	if err != nil || userResp == nil || userResp.User == nil {
 		return errors.New("failed to get user info")
@@ -45,7 +45,7 @@ func (uc *CommentUseCase) CreateComment(ctx context.Context, comment *entity.Com
 }
 
 func (uc *CommentUseCase) GetCommentsByPostID(ctx context.Context, postID int64) ([]entity.Comment, error) {
-	// Проверяем существование поста
+	
 	_, err := uc.postRepo.GetPostByID(ctx, postID)
 	if err != nil {
 		return nil, err

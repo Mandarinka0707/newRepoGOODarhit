@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Полная реализация мока AuthServiceClient
+
 type MockAuthClient struct {
 	mock.Mock
 }
@@ -36,15 +36,13 @@ func (m *MockAuthClient) Login(ctx context.Context, in *pb.LoginRequest, opts ..
 	return args.Get(0).(*pb.LoginResponse), args.Error(1)
 }
 
-// Добавляем метод Register
+
 func (m *MockAuthClient) Register(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
 	args := m.Called(ctx, in, opts)
 	return args.Get(0).(*pb.RegisterResponse), args.Error(1)
 }
 
-// Реализация мока репозитория
-// Реализация мока репозитория
-// Реализация мока репозитория
+
 type MockCommentRepository struct {
 	mock.Mock
 }
@@ -59,29 +57,25 @@ func (m *MockCommentRepository) GetCommentsByPostID(ctx context.Context, postID 
 	return args.Get(0).([]entity.Comment), args.Error(1)
 }
 
-func (m *MockCommentRepository) DeleteComment(ctx context.Context, id int64) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
 
 func TestCreateComment_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// Инициализация моков
+	
 	authClient := new(MockAuthClient)
 	commentRepo := new(MockCommentRepository)
 
-	// Создание usecase с внедрением зависимостей
+
 	uc := &usecase.CommentUseCase{
 		AuthClient:  authClient,
-		CommentRepo: commentRepo, // Используем новый мок
+		CommentRepo: commentRepo,
 	}
 
 	handler := NewCommentHandler(uc)
 	router := gin.Default()
 	router.POST("/posts/:id/comments", handler.CreateComment)
 
-	// Настройка ожиданий
+	
 	authClient.On("ValidateToken", mock.Anything, &pb.ValidateTokenRequest{Token: "valid-token"}, mock.Anything).
 		Return(&pb.ValidateTokenResponse{Valid: true, UserId: 42}, nil)
 
@@ -96,7 +90,7 @@ func TestCreateComment_Success(t *testing.T) {
 	}
 	commentRepo.On("CreateComment", mock.Anything, expectedComment).Return(nil)
 
-	// Выполнение запроса
+	
 	body := `{"content":"test comment"}`
 	req, _ := http.NewRequest("POST", "/posts/1/comments", bytes.NewBufferString(body))
 	req.Header.Set("Authorization", "Bearer valid-token")
@@ -105,7 +99,7 @@ func TestCreateComment_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// Проверки
+	
 	assert.Equal(t, http.StatusCreated, w.Code)
 	authClient.AssertExpectations(t)
 	commentRepo.AssertExpectations(t)

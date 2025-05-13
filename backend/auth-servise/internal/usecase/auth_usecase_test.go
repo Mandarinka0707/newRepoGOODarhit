@@ -67,7 +67,6 @@ func setupTest(t *testing.T) (*AuthUsecase, *MockUserRepo, *MockSessionRepo) {
 		TokenExpiration: time.Hour,
 	}
 
-	// Используем тестовый логгер из zaptest
 	logger := zaptest.NewLogger(t)
 
 	return NewAuthUsecase(userRepo, sessionRepo, cfg, logger), userRepo, sessionRepo
@@ -85,22 +84,11 @@ func TestGetUserByID_Success(t *testing.T) {
 
 	userRepo.On("GetUserByID", ctx, int64(1)).Return(expectedUser, nil)
 
-	user, err := uc.GetUserByID(ctx, "1")
+	user, err := uc.GetUserByID(ctx, 1) // Изменено: передаем int64 вместо строки
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUser, user)
 	userRepo.AssertExpectations(t)
-}
-
-func TestGetUserByID_InvalidFormat(t *testing.T) {
-	uc, _, _ := setupTest(t)
-	ctx := context.Background()
-
-	user, err := uc.GetUserByID(ctx, "invalid")
-
-	assert.Error(t, err)
-	assert.Equal(t, "invalid user ID format", err.Error())
-	assert.Nil(t, user)
 }
 
 func TestRegister_Success(t *testing.T) {
@@ -127,7 +115,7 @@ func TestRegister_HashError(t *testing.T) {
 
 	req := &RegisterRequest{
 		Username: "testuser",
-		Password: string(make([]byte, 100)), // Слишком длинный пароль
+		Password: string(make([]byte, 100)),
 	}
 
 	resp, err := uc.Register(ctx, req)
@@ -329,7 +317,6 @@ func TestGetUser_Logging(t *testing.T) {
 		assert.Equal(t, user, resp.User)
 		userRepo.AssertExpectations(t)
 
-		// Здесь можно проверить логи, если используется zaptest.ObservedLogs
 	})
 
 	t.Run("User not found logs error", func(t *testing.T) {
@@ -346,7 +333,6 @@ func TestGetUser_Logging(t *testing.T) {
 		assert.Nil(t, resp)
 		userRepo.AssertExpectations(t)
 
-		// Проверка логов
 	})
 
 	t.Run("DB error logs error", func(t *testing.T) {
@@ -364,7 +350,6 @@ func TestGetUser_Logging(t *testing.T) {
 		assert.Nil(t, resp)
 		userRepo.AssertExpectations(t)
 
-		// Проверка логов
 	})
 }
 func setupTestWithLogObserver(t *testing.T) (*AuthUsecase, *MockUserRepo, *MockSessionRepo, *observer.ObservedLogs) {
@@ -375,7 +360,6 @@ func setupTestWithLogObserver(t *testing.T) (*AuthUsecase, *MockUserRepo, *MockS
 		TokenExpiration: time.Hour,
 	}
 
-	// Создаем наблюдаемый логгер
 	core, recorded := observer.New(zap.InfoLevel)
 	logger := zap.New(core)
 
@@ -402,7 +386,6 @@ func TestGetUser_LoggingWithObserver(t *testing.T) {
 		assert.Equal(t, user, resp.User)
 		userRepo.AssertExpectations(t)
 
-		// Проверяем логи
 		assert.Equal(t, 1, logs.Len())
 		assert.Contains(t, logs.All()[0].Message, "Get user request")
 		assert.Equal(t, zap.InfoLevel, logs.All()[0].Level)
@@ -422,8 +405,7 @@ func TestGetUser_LoggingWithObserver(t *testing.T) {
 		assert.Nil(t, resp)
 		userRepo.AssertExpectations(t)
 
-		// Проверяем логи
-		assert.Equal(t, 2, logs.Len()) // Info + Error
+		assert.Equal(t, 2, logs.Len())
 		assert.Contains(t, logs.All()[1].Message, "User not found")
 		assert.Equal(t, zap.ErrorLevel, logs.All()[1].Level)
 	})
@@ -443,10 +425,23 @@ func TestGetUser_LoggingWithObserver(t *testing.T) {
 		assert.Nil(t, resp)
 		userRepo.AssertExpectations(t)
 
-		// Проверяем логи
-		assert.Equal(t, 2, logs.Len()) // Info + Error
+		assert.Equal(t, 2, logs.Len())
 		assert.Contains(t, logs.All()[1].Message, "User not found")
 		assert.Equal(t, zap.ErrorLevel, logs.All()[1].Level)
 		assert.Equal(t, dbError, logs.All()[1].Context[0].Interface.(error))
 	})
+}
+
+func TestGetUserByID_NotFound(t *testing.T) {
+	uc, userRepo, _ := setupTest(t)
+	ctx := context.Background()
+
+	userRepo.On("GetUserByID", ctx, int64(1)).Return(nil, sql.ErrNoRows)
+
+	user, err := uc.GetUserByID(ctx, 1) // Изменено: передаем int64 вместо строки
+
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, sql.ErrNoRows))
+	assert.Nil(t, user)
+	userRepo.AssertExpectations(t)
 }

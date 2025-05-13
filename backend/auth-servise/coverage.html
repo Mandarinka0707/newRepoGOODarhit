@@ -1,0 +1,605 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>controller: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">backend.com/forum/auth-servise/internal/controller/auth_grpc.go (100.0%)</option>
+				
+				<option value="file1">backend.com/forum/auth-servise/internal/controller/auth_http.go (100.0%)</option>
+				
+				<option value="file2">backend.com/forum/auth-servise/internal/controller/mocks.go (100.0%)</option>
+				
+				<option value="file3">backend.com/forum/auth-servise/internal/controller/mocks/auth_usecase_mock.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// controller/auth_grpc.go
+package controller
+
+import (
+        "context"
+
+        "backend.com/forum/auth-servise/internal/entity"
+        "backend.com/forum/auth-servise/internal/usecase"
+        pb "backend.com/forum/proto"
+        "google.golang.org/grpc/codes"
+        "google.golang.org/grpc/status"
+        "google.golang.org/protobuf/types/known/timestamppb"
+)
+
+type AuthController struct {
+        uc usecase.AuthUsecaseInterface
+        pb.UnimplementedAuthServiceServer
+}
+
+func NewAuthController(uc usecase.AuthUsecaseInterface) *AuthController <span class="cov8" title="1">{
+        return &amp;AuthController{uc: uc}
+}</span>
+
+func (c *AuthController) Register(
+        ctx context.Context,
+        req *pb.RegisterRequest,
+) (*pb.RegisterResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.RegisterRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := c.uc.Register(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.RegisterResponse{UserId: ucResp.UserID}, nil</span>
+}
+
+func (c *AuthController) Login(
+        ctx context.Context,
+        req *pb.LoginRequest,
+) (*pb.LoginResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.LoginRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := c.uc.Login(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.LoginResponse{
+                Token:    ucResp.Token,
+                Username: ucResp.Username,
+        }, nil</span>
+}
+
+func (c *AuthController) GetUser(
+        ctx context.Context,
+        req *pb.GetUserRequest,
+) (*pb.GetUserResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.GetUserRequest{UserID: req.Id}
+
+        ucResp, err := c.uc.GetUser(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.GetUserResponse{
+                User: convertUserToProto(ucResp.User),
+        }, nil</span>
+}
+
+// auth_grpc.go
+func convertUserToProto(user *entity.User) *pb.User <span class="cov8" title="1">{
+        if user == nil </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">var role string
+        switch user.Role </span>{
+        case entity.RoleAdmin:<span class="cov8" title="1">
+                role = "admin"</span>
+        case entity.RoleUser:<span class="cov8" title="1">
+                role = "user"</span>
+        default:<span class="cov8" title="1">
+                role = string(user.Role)</span> // для любых других значений
+        }
+
+        <span class="cov8" title="1">return &amp;pb.User{
+                Id:        user.ID,
+                Username:  user.Username,
+                Role:      role,
+                CreatedAt: timestamppb.New(user.CreatedAt),
+        }</span>
+}
+func (c *AuthController) ValidateToken(
+        ctx context.Context,
+        req *pb.ValidateTokenRequest,
+) (*pb.ValidateTokenResponse, error) <span class="cov8" title="1">{
+        if req == nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.ValidateTokenRequest{Token: req.Token}
+
+        ucResp, err := c.uc.ValidateToken(ctx, ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, status.Error(codes.Internal, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">return &amp;pb.ValidateTokenResponse{
+                Valid:  ucResp.Valid,
+                UserId: ucResp.UserID,
+                Role:   ucResp.Role,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// controller/auth_http.go
+package controller
+
+import (
+        "net/http"
+        "strconv"
+
+        "backend.com/forum/auth-servise/internal/usecase"
+        "github.com/gin-gonic/gin"
+)
+
+type HTTPAuthController struct {
+        uc usecase.AuthUsecaseInterface
+}
+
+func NewHTTPAuthController(uc usecase.AuthUsecaseInterface) *HTTPAuthController <span class="cov8" title="1">{
+        return &amp;HTTPAuthController{uc: uc}
+}</span>
+
+type HTTPRegisterRequest struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+}
+
+type HTTPLoginRequest struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+}
+
+// Register регистрирует пользователя через HTTP
+// @Summary Регистрация пользователя
+// @Description Регистрирует нового пользователя
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPRegisterRequest true "Данные для регистрации"
+// @Success 200 {object} map[string]interface{} "user_id"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/register [post]
+func (ctrl *HTTPAuthController) Register(c *gin.Context) <span class="cov8" title="1">{
+        var req HTTPRegisterRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.RegisterRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := ctrl.uc.Register(c.Request.Context(), ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "user_id": ucResp.UserID,
+        })</span>
+}
+
+// Login выполняет аутентификацию пользователя
+// @Summary Аутентификация пользователя
+// @Description Вход в систему с логином и паролем
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body HTTPLoginRequest true "Данные для входа"
+// @Success 200 {object} map[string]interface{} "token"
+// @Failure 400 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/login [post]
+func (ctrl *HTTPAuthController) Login(c *gin.Context) <span class="cov8" title="1">{
+        var req HTTPLoginRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ucReq := &amp;usecase.LoginRequest{
+                Username: req.Username,
+                Password: req.Password,
+        }
+
+        ucResp, err := ctrl.uc.Login(c.Request.Context(), ucReq)
+        if err != nil </span><span class="cov8" title="1">{
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return
+        }</span>
+
+        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{
+                "token":    ucResp.Token,
+                "username": ucResp.Username,
+        })</span>
+}
+
+// GetUser получает информацию о пользователе
+// @Summary Получить данные пользователя
+// @Description Возвращает информацию о пользователе по ID
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param id path string true "ID пользователя"
+// @Success 200 {object} map[string]interface{} "Данные пользователя"
+// @Failure 404 {object} entity.ErrorResponse
+// @Failure 500 {object} entity.ErrorResponse
+// @Router /api/v1/auth/user/{id} [get]
+func (ctrl *HTTPAuthController) GetUser(ctx *gin.Context) <span class="cov8" title="1">{
+        userIDStr := ctx.Param("id")
+        userID, err := strconv.ParseInt(userIDStr, 10, 64)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">user, err := ctrl.uc.GetUserByID(ctx.Request.Context(), userID)
+        if err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">ctx.JSON(http.StatusOK, gin.H{
+                "id":       user.ID,
+                "username": user.Username,
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// controller/mocks_test.go
+package controller
+
+import (
+        "context"
+        "reflect"
+
+        "backend.com/forum/auth-servise/internal/entity"
+        "backend.com/forum/auth-servise/internal/usecase"
+        "github.com/golang/mock/gomock"
+)
+
+// gomock implementation for gRPC tests
+type MockAuthUsecase struct {
+        ctrl     *gomock.Controller
+        recorder *MockAuthUsecaseRecorder
+}
+
+var _ usecase.AuthUsecaseInterface = (*MockAuthUsecase)(nil)
+
+type MockAuthUsecaseRecorder struct {
+        mock *MockAuthUsecase
+}
+
+func NewMockAuthUsecase(ctrl *gomock.Controller) *MockAuthUsecase <span class="cov8" title="1">{
+        mock := &amp;MockAuthUsecase{ctrl: ctrl}
+        mock.recorder = &amp;MockAuthUsecaseRecorder{mock}
+        return mock
+}</span>
+
+func (m *MockAuthUsecase) EXPECT() *MockAuthUsecaseRecorder <span class="cov8" title="1">{
+        return m.recorder
+}</span>
+
+func (m *MockAuthUsecase) Register(ctx context.Context, req *usecase.RegisterRequest) (*usecase.RegisterResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "Register", ctx, req)
+        ret0, _ := ret[0].(*usecase.RegisterResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) Login(ctx context.Context, req *usecase.LoginRequest) (*usecase.LoginResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "Login", ctx, req)
+        ret0, _ := ret[0].(*usecase.LoginResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) GetUser(ctx context.Context, req *usecase.GetUserRequest) (*usecase.GetUserResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "GetUser", ctx, req)
+        ret0, _ := ret[0].(*usecase.GetUserResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) ValidateToken(ctx context.Context, req *usecase.ValidateTokenRequest) (*usecase.ValidateTokenResponse, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "ValidateToken", ctx, req)
+        ret0, _ := ret[0].(*usecase.ValidateTokenResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (m *MockAuthUsecase) GetUserByID(ctx context.Context, userID int64) (*entity.User, error) <span class="cov8" title="1">{
+        ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+        ret0, _ := ret[0].(*entity.User)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) Register(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "Register",
+                reflect.TypeOf((*MockAuthUsecase)(nil).Register),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) Login(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "Login",
+                reflect.TypeOf((*MockAuthUsecase)(nil).Login),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) GetUser(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "GetUser",
+                reflect.TypeOf((*MockAuthUsecase)(nil).GetUser),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) ValidateToken(ctx, req interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "ValidateToken",
+                reflect.TypeOf((*MockAuthUsecase)(nil).ValidateToken),
+                ctx,
+                req,
+        )
+}</span>
+
+func (mr *MockAuthUsecaseRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call <span class="cov8" title="1">{
+        return mr.mock.ctrl.RecordCallWithMethodType(
+                mr.mock,
+                "GetUserByID",
+                reflect.TypeOf((*MockAuthUsecase)(nil).GetUserByID),
+                ctx,
+                userID,
+        )
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Code generated by MockGen. DO NOT EDIT.
+// Source: internal/usecase/auth_usecase.go
+
+// Package controller is a generated GoMock package.
+package controller
+
+import (
+        context "context"
+        reflect "reflect"
+
+        entity "backend.com/forum/auth-servise/internal/entity"
+        usecase "backend.com/forum/auth-servise/internal/usecase"
+        gomock "github.com/golang/mock/gomock"
+)
+
+// MockAuthUsecaseInterface is a mock of AuthUsecaseInterface interface.
+type MockAuthUsecaseInterface struct {
+        ctrl     *gomock.Controller
+        recorder *MockAuthUsecaseInterfaceMockRecorder
+}
+
+// MockAuthUsecaseInterfaceMockRecorder is the mock recorder for MockAuthUsecaseInterface.
+type MockAuthUsecaseInterfaceMockRecorder struct {
+        mock *MockAuthUsecaseInterface
+}
+
+// NewMockAuthUsecaseInterface creates a new mock instance.
+func NewMockAuthUsecaseInterface(ctrl *gomock.Controller) *MockAuthUsecaseInterface <span class="cov0" title="0">{
+        mock := &amp;MockAuthUsecaseInterface{ctrl: ctrl}
+        mock.recorder = &amp;MockAuthUsecaseInterfaceMockRecorder{mock}
+        return mock
+}</span>
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockAuthUsecaseInterface) EXPECT() *MockAuthUsecaseInterfaceMockRecorder <span class="cov0" title="0">{
+        return m.recorder
+}</span>
+
+// GetUser mocks base method.
+func (m *MockAuthUsecaseInterface) GetUser(ctx context.Context, req *usecase.GetUserRequest) (*usecase.GetUserResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "GetUser", ctx, req)
+        ret0, _ := ret[0].(*usecase.GetUserResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// GetUser indicates an expected call of GetUser.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) GetUser(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).GetUser), ctx, req)
+}</span>
+
+// GetUserByID mocks base method.
+func (m *MockAuthUsecaseInterface) GetUserByID(ctx context.Context, userID string) (*entity.User, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+        ret0, _ := ret[0].(*entity.User)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).GetUserByID), ctx, userID)
+}</span>
+
+// Login mocks base method.
+func (m *MockAuthUsecaseInterface) Login(ctx context.Context, req *usecase.LoginRequest) (*usecase.LoginResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "Login", ctx, req)
+        ret0, _ := ret[0].(*usecase.LoginResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// Login indicates an expected call of Login.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) Login(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).Login), ctx, req)
+}</span>
+
+// Register mocks base method.
+func (m *MockAuthUsecaseInterface) Register(ctx context.Context, req *usecase.RegisterRequest) (*usecase.RegisterResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "Register", ctx, req)
+        ret0, _ := ret[0].(*usecase.RegisterResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// Register indicates an expected call of Register.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) Register(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).Register), ctx, req)
+}</span>
+
+// ValidateToken mocks base method.
+func (m *MockAuthUsecaseInterface) ValidateToken(ctx context.Context, req *usecase.ValidateTokenRequest) (*usecase.ValidateTokenResponse, error) <span class="cov0" title="0">{
+        m.ctrl.T.Helper()
+        ret := m.ctrl.Call(m, "ValidateToken", ctx, req)
+        ret0, _ := ret[0].(*usecase.ValidateTokenResponse)
+        ret1, _ := ret[1].(error)
+        return ret0, ret1
+}</span>
+
+// ValidateToken indicates an expected call of ValidateToken.
+func (mr *MockAuthUsecaseInterfaceMockRecorder) ValidateToken(ctx, req interface{}) *gomock.Call <span class="cov0" title="0">{
+        mr.mock.ctrl.T.Helper()
+        return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*MockAuthUsecaseInterface)(nil).ValidateToken), ctx, req)
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

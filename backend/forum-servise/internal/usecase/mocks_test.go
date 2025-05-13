@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// MockPostRepository реализует PostRepository
+
 type MockPostRepository struct {
 	CreatePostFunc  func(ctx context.Context, post *entity.Post) (int64, error)
 	GetPostsFunc    func(ctx context.Context) ([]*entity.Post, error)
@@ -52,7 +52,7 @@ func (m *MockPostRepository) UpdatePost(ctx context.Context, postID, authorID in
 	return nil, nil
 }
 
-// MockAuthServiceClient реализует AuthServiceClient
+
 type MockAuthServiceClient struct {
 	ValidateTokenFunc func(ctx context.Context, in *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error)
 	GetUserFunc       func(ctx context.Context, in *pb.GetUserRequest, opts ...grpc.CallOption) (*pb.GetUserResponse, error)

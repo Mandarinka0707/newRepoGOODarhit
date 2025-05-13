@@ -6,3 +6,8 @@ type ErrorResponse struct {
 type SuccessResponse struct {
 	Message string `json:"message" example:"success message"`
 }
+
+type CreatePostRequest struct {
+	Title   string `json:"title" example:"My Post Title"`
+	Content string `json:"content" example:"Post content text"`
+}

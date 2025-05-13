@@ -130,7 +130,7 @@ func TestGetPosts(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "title", "content", "author_id", "created_at"})
 				mock.ExpectQuery(`SELECT`).WillReturnRows(rows)
 			},
-			want: []*entity.Post{}, // Ожидаем пустой слайс
+			want: []*entity.Post{}, 
 		},
 		{
 			name: "Error",

@@ -52,6 +52,37 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/posts:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all forum posts with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Posts per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/entity.ErrorResponse'
+      summary: Get all posts
+      tags:
+      - posts
   /api/v1/posts/{id}:
     delete:
       consumes:

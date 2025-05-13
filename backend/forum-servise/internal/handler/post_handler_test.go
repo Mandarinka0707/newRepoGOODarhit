@@ -16,9 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// --- Mock Usecase ---
 
-// --- Mock Usecase ---
 
 type mockPostUsecase struct {
 	mock.Mock
@@ -29,7 +27,7 @@ func (m *mockPostUsecase) CreatePost(ctx context.Context, token, title, content 
 	return args.Get(0).(*entity.Post), args.Error(1)
 }
 
-// ✅ Исправленный тип: []*entity.Post вместо []entity.Post
+
 func (m *mockPostUsecase) GetPosts(ctx context.Context) ([]*entity.Post, map[int]string, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*entity.Post), args.Get(1).(map[int]string), args.Error(2)
@@ -46,10 +44,10 @@ func (m *mockPostUsecase) UpdatePost(ctx context.Context, token string, postID i
 }
 
 func newTestLogger() *logger.Logger {
-	return &logger.Logger{SugaredLogger: nil} // no-op
+	return &logger.Logger{SugaredLogger: nil} 
 }
 
-// --- Tests ---
+
 
 func TestCreatePost(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -92,7 +90,7 @@ func TestGetPosts(t *testing.T) {
 	r := gin.Default()
 	r.GET("/posts", handler.GetPosts)
 
-	// ✅ Используем []*entity.Post вместо []entity.Post
+	
 	mockPosts := []*entity.Post{
 		{ID: 1, Title: "Test", Content: "Body", AuthorID: 1, CreatedAt: time.Now()},
 	}

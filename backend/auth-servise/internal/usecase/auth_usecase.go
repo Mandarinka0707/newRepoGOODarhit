@@ -4,7 +4,6 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"backend.com/forum/auth-servise/internal/entity"
@@ -21,20 +20,13 @@ type AuthUsecase struct {
 	cfg         *auth.Config
 	logger      *zap.Logger
 }
+
 type AuthUsecaseInterface interface {
 	Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error)
 	Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
-	GetUserByID(ctx context.Context, userID string) (*entity.User, error)
+	GetUserByID(ctx context.Context, userID int64) (*entity.User, error)
 	ValidateToken(ctx context.Context, req *ValidateTokenRequest) (*ValidateTokenResponse, error)
 	GetUser(ctx context.Context, req *GetUserRequest) (*GetUserResponse, error)
-}
-
-func (uc *AuthUsecase) GetUserByID(ctx context.Context, userID string) (*entity.User, error) {
-	id, err := strconv.ParseInt(userID, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID format")
-	}
-	return uc.userRepo.GetUserByID(ctx, id)
 }
 
 func NewAuthUsecase(
@@ -77,8 +69,11 @@ func (uc *AuthUsecase) Register(
 	return &RegisterResponse{UserID: userID}, nil
 }
 
-func (u *AuthUsecase) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
-	user, err := u.userRepo.GetUserByUsername(ctx, req.Username)
+func (uc *AuthUsecase) Login(
+	ctx context.Context,
+	req *LoginRequest,
+) (*LoginResponse, error) {
+	user, err := uc.userRepo.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("invalid username or password")
 	}
@@ -88,22 +83,26 @@ func (u *AuthUsecase) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	// Генерация токена
-	token, err := auth.GenerateToken(user.ID, user.Role, user.Username, u.cfg.TokenSecret, u.cfg.TokenExpiration)
+	token, err := auth.GenerateToken(
+		user.ID,
+		user.Role,
+		user.Username,
+		uc.cfg.TokenSecret,
+		uc.cfg.TokenExpiration,
+	)
 	if err != nil {
-		u.logger.Error("failed to generate token", zap.Error(err))
+		uc.logger.Error("failed to generate token", zap.Error(err))
 		return nil, fmt.Errorf("internal server error")
 	}
 
-	// Создание сессии только если токен успешно сгенерировачн
 	session := &entity.Session{
 		UserID:    user.ID,
 		Token:     token,
-		ExpiresAt: time.Now().Add(u.cfg.TokenExpiration),
+		ExpiresAt: time.Now().Add(uc.cfg.TokenExpiration),
 	}
 
-	if err := u.sessionRepo.CreateSession(ctx, session); err != nil {
-		u.logger.Error("failed to create session", zap.Error(err))
+	if err := uc.sessionRepo.CreateSession(ctx, session); err != nil {
+		uc.logger.Error("failed to create session", zap.Error(err))
 		return nil, fmt.Errorf("internal server error")
 	}
 
@@ -111,6 +110,13 @@ func (u *AuthUsecase) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		Token:    token,
 		Username: user.Username,
 	}, nil
+}
+
+func (uc *AuthUsecase) GetUserByID(
+	ctx context.Context,
+	userID int64,
+) (*entity.User, error) {
+	return uc.userRepo.GetUserByID(ctx, userID)
 }
 
 func (uc *AuthUsecase) ValidateToken(

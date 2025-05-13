@@ -1,13 +1,12 @@
 package main
 
 import (
-	_ "chat-microservice-go/docs"
 	"chat-microservice-go/internal/handler"
 	"chat-microservice-go/internal/repository"
 	"chat-microservice-go/internal/usecase"
 	"database/sql"
 	"log"
-
+	_ "chat-microservice-go/docs" 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -51,7 +50,7 @@ func main() {
 	r := gin.Default()
 	r.Use(cors.Default())
 
-	// Add Swagger route
+	
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// WebSocket endpoint

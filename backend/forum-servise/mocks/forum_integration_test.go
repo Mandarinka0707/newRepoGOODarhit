@@ -93,7 +93,6 @@ func TestForumService_Integrated(t *testing.T) {
 		deps := setupTest(t)
 		defer deps.db.Close()
 
-		// 1. Create and get post
 		t.Run("Create and get post", func(t *testing.T) {
 			now := time.Now()
 			createQuery := `INSERT INTO posts (title, content, author_id, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
@@ -117,7 +116,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Equal(t, post.ID, retrievedPost.ID)
 		})
 
-		// 2. Get posts list
 		t.Run("Get posts list", func(t *testing.T) {
 			query := `SELECT id, title, content, author_id, created_at FROM posts ORDER BY created_at DESC`
 			now := time.Now()
@@ -133,7 +131,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Equal(t, "testuser", authorNames[1])
 		})
 
-		// 3. Create comment
 		t.Run("Create comment", func(t *testing.T) {
 			postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 			commentQuery := `INSERT INTO comments (content, author_id, post_id, author_name) VALUES ($1, $2, $3, $4) RETURNING id`
@@ -158,7 +155,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Equal(t, int64(1), comment.ID)
 		})
 
-		// 4. Get comments
 		t.Run("Get comments", func(t *testing.T) {
 			postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 			commentQuery := `SELECT id, content, author_id, post_id, author_name FROM comments WHERE post_id = $1 ORDER BY id DESC`
@@ -178,7 +174,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Len(t, comments, 1)
 		})
 
-		// 5. Update post
 		t.Run("Update post", func(t *testing.T) {
 			query := `UPDATE posts SET title = $1, content = $2 WHERE id = $3 AND (author_id = $4 OR $5 = 'admin') RETURNING id, title, content, author_id, created_at`
 
@@ -192,7 +187,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Equal(t, "Updated Title", post.Title)
 		})
 
-		// 6. Delete post
 		t.Run("Delete post", func(t *testing.T) {
 			query := `DELETE FROM posts WHERE id = $1 AND (author_id = $2 OR $3 = 'admin')`
 
@@ -211,7 +205,6 @@ func TestForumService_Integrated(t *testing.T) {
 		deps := setupTest(t)
 		defer deps.db.Close()
 
-		// 1. Create post error
 		t.Run("Create post database error", func(t *testing.T) {
 			query := `INSERT INTO posts (title, content, author_id, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
 
@@ -223,7 +216,6 @@ func TestForumService_Integrated(t *testing.T) {
 			require.Error(t, err)
 		})
 
-		// 2. Get posts list error
 		t.Run("Get posts list error", func(t *testing.T) {
 			query := `SELECT id, title, content, author_id, created_at FROM posts ORDER BY created_at DESC`
 
@@ -234,7 +226,6 @@ func TestForumService_Integrated(t *testing.T) {
 			require.Error(t, err)
 		})
 
-		// 3. Create comment for non-existent post
 		t.Run("Create comment for non-existent post", func(t *testing.T) {
 			query := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 
@@ -253,7 +244,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.True(t, errors.Is(err, repository.ErrPostNotFound))
 		})
 
-		// 4. Update non-existent post
 		t.Run("Update non-existent post", func(t *testing.T) {
 			query := `UPDATE posts SET title = $1, content = $2 WHERE id = $3 AND (author_id = $4 OR $5 = 'admin') RETURNING id, title, content, author_id, created_at`
 
@@ -266,7 +256,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.True(t, errors.Is(err, repository.ErrPostNotFound))
 		})
 
-		// 5. Delete non-existent post
 		t.Run("Delete non-existent post", func(t *testing.T) {
 			query := `DELETE FROM posts WHERE id = $1 AND (author_id = $2 OR $3 = 'admin')`
 
@@ -279,7 +268,6 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.True(t, errors.Is(err, repository.ErrPostNotFound))
 		})
 
-		// 6. Authentication error
 		t.Run("Authentication error", func(t *testing.T) {
 			errorAuthClient := &mockAuthClient{
 				validateFunc: func(ctx context.Context, req *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error) {
@@ -300,7 +288,6 @@ func TestForumService_Integrated(t *testing.T) {
 		deps := setupTest(t)
 		defer deps.db.Close()
 
-		// 1. Empty posts list
 		t.Run("Empty posts list", func(t *testing.T) {
 			query := `SELECT id, title, content, author_id, created_at FROM posts ORDER BY created_at DESC`
 
@@ -312,7 +299,7 @@ func TestForumService_Integrated(t *testing.T) {
 			assert.Empty(t, posts)
 			assert.Empty(t, authorNames)
 		})
-		// Добавляем в Error scenarios
+
 		t.Run("Create comment database error", func(t *testing.T) {
 			postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 			commentQuery := `INSERT INTO comments (content, author_id, post_id, author_name) VALUES ($1, $2, $3, $4) RETURNING id`
@@ -335,14 +322,14 @@ func TestForumService_Integrated(t *testing.T) {
 			err := deps.commentUC.CreateComment(context.Background(), comment)
 			require.Error(t, err)
 		})
-		// Добавляем в Success scenarios
+
 		t.Run("Update post as admin", func(t *testing.T) {
-			// Настраиваем мок для админа
+
 			authClient := &mockAuthClient{
 				validateFunc: func(ctx context.Context, req *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error) {
 					return &pb.ValidateTokenResponse{
 						Valid:  true,
-						UserId: 2, // Другой пользователь
+						UserId: 2,
 						Role:   "admin",
 					}, nil
 				},
@@ -360,7 +347,7 @@ func TestForumService_Integrated(t *testing.T) {
 			_, err := postUC.UpdatePost(context.Background(), "admin_token", 1, "Admin Updated", "Admin Content")
 			require.NoError(t, err)
 		})
-		// Добавляем в Error scenarios
+
 		t.Run("Get user error", func(t *testing.T) {
 			authClient := &mockAuthClient{
 				validateFunc: func(ctx context.Context, req *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error) {
@@ -377,7 +364,6 @@ func TestForumService_Integrated(t *testing.T) {
 
 			commentUC := usecase.NewCommentUseCase(deps.commentRepo, deps.postRepo, authClient)
 
-			// Сначала мокаем проверку поста
 			deps.mock.ExpectQuery(`SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`).
 				WithArgs(int64(1)).
 				WillReturnRows(sqlmock.NewRows([]string{"id", "title", "content", "author_id", "created_at"}).
@@ -392,7 +378,7 @@ func TestForumService_Integrated(t *testing.T) {
 			err := commentUC.CreateComment(context.Background(), comment)
 			require.Error(t, err)
 		})
-		// Добавляем в Error scenarios
+
 		t.Run("Invalid token", func(t *testing.T) {
 			authClient := &mockAuthClient{
 				validateFunc: func(ctx context.Context, req *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error) {
@@ -408,14 +394,14 @@ func TestForumService_Integrated(t *testing.T) {
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "invalid token")
 		})
-		// Добавляем в Error scenarios
+
 		t.Run("Update post without permission", func(t *testing.T) {
-			// Настраиваем мок для пользователя без прав
+
 			authClient := &mockAuthClient{
 				validateFunc: func(ctx context.Context, req *pb.ValidateTokenRequest, opts ...grpc.CallOption) (*pb.ValidateTokenResponse, error) {
 					return &pb.ValidateTokenResponse{
 						Valid:  true,
-						UserId: 2, // Другой пользователь
+						UserId: 2,
 						Role:   "user",
 					}, nil
 				},
@@ -450,7 +436,6 @@ func TestForumService_Integrated(t *testing.T) {
 			require.Error(t, err)
 		})
 
-		// 2. Empty comments list
 		t.Run("Empty comments list", func(t *testing.T) {
 			postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 			commentQuery := `SELECT id, content, author_id, post_id, author_name FROM comments WHERE post_id = $1 ORDER BY id DESC`
@@ -474,8 +459,8 @@ func TestForumService_Integrated(t *testing.T) {
 
 }
 func TestPostHandler(t *testing.T) {
-	// Создаем мок логгера
-	mockLogger := &logger.Logger{} // или используйте ваш реальный логгер
+
+	mockLogger := &logger.Logger{}
 
 	t.Run("CreatePost success", func(t *testing.T) {
 		mockUC := &mockPostUseCase{
@@ -587,7 +572,7 @@ func TestPostHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
-	// Добавляем в TestPostHandler
+
 	t.Run("CreatePost invalid request body", func(t *testing.T) {
 		handler := handler.NewPostHandler(nil, mockLogger)
 
@@ -814,7 +799,6 @@ func TestPostHandler(t *testing.T) {
 	})
 }
 
-// Исправленная функция TestCommentHandler
 func TestCommentHandler(t *testing.T) {
 	t.Run("CreateComment success", func(t *testing.T) {
 		mockAuth := &mockAuthClient{
@@ -833,7 +817,6 @@ func TestCommentHandler(t *testing.T) {
 			},
 		}
 
-		// Создаем реальный CommentUseCase с нашим mockAuthClient
 		commentUC := usecase.NewCommentUseCase(nil, nil, mockAuth)
 		handler := handler.NewCommentHandler(commentUC)
 
@@ -922,7 +905,6 @@ func TestCommentHandler(t *testing.T) {
 			},
 		}
 
-		// Создаем реальный CommentUseCase с нашим mockAuthClient
 		commentUC := usecase.NewCommentUseCase(mockUC, nil, mockAuth)
 		handler := handler.NewCommentHandler(commentUC)
 
@@ -940,11 +922,10 @@ func TestCommentHandler(t *testing.T) {
 	})
 
 	t.Run("GetCommentsByPostID database error", func(t *testing.T) {
-		// Используем реальный usecase с моками
+
 		deps := setupTest(t)
 		defer deps.db.Close()
 
-		// Настраиваем моки для получения комментариев
 		postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 		commentQuery := `SELECT id, content, author_id, post_id, author_name FROM comments WHERE post_id = $1 ORDER BY id DESC`
 
@@ -970,11 +951,10 @@ func TestCommentHandler(t *testing.T) {
 	})
 
 	t.Run("GetCommentsByPostID success", func(t *testing.T) {
-		// Используем реальный usecase с моками
+
 		deps := setupTest(t)
 		defer deps.db.Close()
 
-		// Настраиваем моки для получения комментариев
 		postQuery := `SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1`
 		commentQuery := `SELECT id, content, author_id, post_id, author_name FROM comments WHERE post_id = $1 ORDER BY id DESC`
 
@@ -1007,7 +987,6 @@ func TestCommentHandler(t *testing.T) {
 	})
 }
 
-// Mock implementations для тестов handler'ов
 type mockPostUseCase struct {
 	usecase.PostUsecaseInterface
 	createFunc   func(context.Context, string, string, string) (*entity.Post, error)
@@ -1039,7 +1018,6 @@ type mockCommentUseCase struct {
 	deleteFunc      func(context.Context, int64) error // Add this line
 }
 
-// Add this method implementation
 func (m *mockCommentUseCase) DeleteComment(ctx context.Context, commentID int64) error {
 	if m.deleteFunc != nil {
 		return m.deleteFunc(ctx, commentID)
